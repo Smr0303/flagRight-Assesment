@@ -4,7 +4,51 @@ const ErrorHandler = require("../utils/errorHandler");
 const { v4: uuidv4 } = require('uuid');
 const TransactionReporter = require("../utils/reportHandler");
 const path = require('path');
+const z = require("zod");
 
+// Zod validation schemas
+const DeviceDataSchema = z.object({
+    batteryLevel: z.number().optional(),
+    deviceLatitude: z.number().optional(),
+    deviceLongitude: z.number().optional(),
+    ipAddress: z.string().optional(),
+    deviceIdentifier: z.string().optional(),
+    vpnUsed: z.boolean().optional(),
+    operatingSystem: z.string().optional(),
+    deviceMaker: z.string().optional(),
+    deviceModel: z.string().optional(),
+    deviceYear: z.string().optional(),
+    appVersion: z.string().optional()
+});
+
+const AmountDetailsSchema = z.object({
+    transactionAmount: z.number().positive(),
+    transactionCurrency: z.string(),
+    country: z.string()
+});
+
+const TagSchema = z.object({
+    key: z.string(),
+    value: z.string()
+});
+
+const TransactionSchema = z.object({
+    transactionId: z.string().uuid().optional(),
+    type: z.enum(['Deposit', 'Withdrawal', 'Transfer', 'Payment']),
+    timestamp: z.number().int().optional(),
+    originUserId: z.string(),
+    destinationUserId: z.string(),
+    originAmountDetails: AmountDetailsSchema,
+    destinationAmountDetails: AmountDetailsSchema,
+    promotionCodeUsed: z.boolean().optional(),
+    reference: z.string().optional(),
+    originDeviceData: DeviceDataSchema.optional(),
+    destinationDeviceData: DeviceDataSchema.optional(),
+    tags: z.array(TagSchema).optional(),
+    description: z.string().optional(),
+    originEmail: z.string().email().optional(),
+    destinationEmail: z.string().email().optional()
+});
 
 exports.createTransaction = catchAsyncError(async (req, res, next) => {
         const {
@@ -100,13 +144,57 @@ exports.getReport = catchAsyncError(async (req, res, next) => {
         type: req.query.type
       },res);
   
-      // Send processed data to frontend
-    //   res.json({
-    //     summary: reportData.summary,
-    //     transactions: reportData.transactions,
-    //     reportOptions: {
-    //       csvDownloadUrl: `/download/csv/${path.basename(reportData.csvPath)}`,
-    //       pdfDownloadUrl: `/download/pdf/${path.basename(reportData.pdfPath)}`,
-    //     }
-    //   });
   });
+
+
+exports.searchTransaction = catchAsyncError(async (req, res, next) => {
+
+    const searchParams = z.object({
+        userId: z.string().uuid().optional(),
+        type: z.enum(['Deposit', 'Withdrawal', 'Transfer', 'Payment']).optional(),
+        startTimestamp: z.number().int().optional(),
+        endTimestamp: z.number().int().optional(),
+        minAmount: z.number().optional(),
+        maxAmount: z.number().optional(),
+        currency: z.string().optional(),
+        description: z.string().optional(),
+        page: z.number().int().positive().optional().default(1),
+        pageSize: z.number().int().positive().optional().default(20)
+    }).parse(req.query);
+
+    
+    const { data, error } = await supabase.rpc('search_transactions', {
+        p_user_id: searchParams.userId || null,
+        p_type: searchParams.type || null,
+        p_start_timestamp: searchParams.startTimestamp || null,
+        p_end_timestamp: searchParams.endTimestamp || null,
+        p_min_amount: searchParams.minAmount || null,
+        p_max_amount: searchParams.maxAmount || null,
+        p_currency: searchParams.currency || null,
+        p_description: searchParams.description || null,
+        p_page: searchParams.page,
+        p_page_size: searchParams.pageSize
+    });
+
+
+    if (error) {
+        return res.status(500).json({
+            message: 'Error searching transactions',
+            error: error.message
+        });
+    }
+
+    // Calculate pagination metadata
+    const totalCount = data.length > 0 ? data[0].total_count : 0;
+    const totalPages = Math.ceil(totalCount / searchParams.pageSize);
+
+    res.status(200).json({
+        data: data,
+        pagination: {
+            page: searchParams.page,
+            pageSize: searchParams.pageSize,
+            totalCount: totalCount,
+            totalPages: totalPages
+        }
+    });
+});

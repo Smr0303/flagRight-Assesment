@@ -31,8 +31,9 @@ exports.startCronJob = catchAsyncError(async(req, res) => {
 
   if (isRunning)  return res.status(400).json({ message: 'CRON job is already running.' });
   
+  console.log("Starting CRON job1");
 
-  task = cron.schedule('* * * * *', generateTransaction); 
+  task = cron.schedule('* * * * * *', generateTransaction); 
   task.start();
   isRunning = true;
 

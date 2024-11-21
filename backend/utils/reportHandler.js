@@ -1,4 +1,4 @@
-const {supabase} = require("../config/db");
+const { supabase } = require("../config/db");
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const csv = require('fast-csv');
@@ -6,7 +6,7 @@ const csv = require('fast-csv');
 class TransactionReporter {
 
   constructor() {
-    this.supabase = supabase
+    this.supabase = supabase;
   }
 
   /**
@@ -14,7 +14,6 @@ class TransactionReporter {
    * @param {UUID} transactionId 
    * @returns {Promise<Object>} Detailed transaction
    */
-
   async getTransactionById(transactionId) {
     const { data, error } = await this.supabase
       .rpc('get_transaction', { p_transactionid: transactionId });
@@ -28,7 +27,6 @@ class TransactionReporter {
    * @param {Object} options - Query parameters
    * @returns {Promise<Object>} Transactions and metadata
    */
-
   async fetchTransactions(options = {}) {
     const { 
       startTimestamp, 
@@ -47,10 +45,10 @@ class TransactionReporter {
 
     // Apply filters
     if (startTimestamp) {
-      query = query.gte('timestamp', startTimestamp);
+      query = query.gte('transaction_timestamp', startTimestamp);
     }
     if (endTimestamp) {
-      query = query.lte('timestamp', endTimestamp);
+      query = query.lte('transaction_timestamp', endTimestamp);
     }
     if (type) {
       query = query.eq('type', type);
@@ -72,7 +70,7 @@ class TransactionReporter {
         (pagination.page - 1) * pagination.pageSize, 
         pagination.page * pagination.pageSize - 1
       )
-      .order('timestamp', { ascending: false });
+      .order('transaction_timestamp', { ascending: false });
 
     const { data, error, count } = await query;
 
@@ -91,7 +89,6 @@ class TransactionReporter {
    * @param {Array} transactions - List of transactions
    * @returns {Object} Detailed summary
    */
-
   generateSummary(transactions) {
 
     const summary = {
@@ -166,7 +163,6 @@ class TransactionReporter {
    * @param {JSONB} amountDetails 
    * @returns {number} Extracted amount
    */
-
   extractAmount(amountDetails) {
     // Implement logic to extract amount based on your specific JSONB structure
     if (typeof amountDetails === 'number') return amountDetails;
@@ -183,59 +179,57 @@ class TransactionReporter {
    * @param {string} filepath 
    * @returns {Promise<string>} PDF filepath
    */
+  // async generatePDFReport(reportData, res) {
+  //   return new Promise((resolve, reject) => {
+  //     const doc = new PDFDocument();
 
-  async generatePDFReport(reportData, res) {
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument();
+  //     res.setHeader('Content-Type', 'application/pdf');
+  //     res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
+  //     doc.pipe(res);
 
-      doc.pipe(res);
+  //     // Detailed Report Generation
+  //     doc.fontSize(20).text('Comprehensive Transaction Report', { align: 'center' });
+  //     doc.moveDown();
 
-      // Detailed Report Generation
-      doc.fontSize(20).text('Comprehensive Transaction Report', { align: 'center' });
-      doc.moveDown();
-
-      // Transaction Type Summary
-      doc.fontSize(16).text('Transaction Type Breakdown', { underline: true });
+  //     // Transaction Type Summary
+  //     doc.fontSize(16).text('Transaction Type Breakdown', { underline: true });
       
-      Object.entries(reportData.summary.transactionTypes).forEach(([type, count]) => {
-        doc.fontSize(12).text(`${type}: ${count} transactions`);
-      });
+  //     Object.entries(reportData.summary.transactionTypes).forEach(([type, count]) => {
+  //       doc.fontSize(12).text(`${type}: ${count} transactions`);
+  //     });
 
-      // Amount Summary
-      doc.moveDown().fontSize(16).text('Financial Summary', { underline: true });
-      doc.fontSize(12)
-        .text(`Total Origin Amount: $${reportData.summary.amountSummary.total.origin.toFixed(2)}`)
-        .text(`Total Destination Amount: $${reportData.summary.amountSummary.total.destination.toFixed(2)}`);
+  //     // Amount Summary
+  //     doc.moveDown().fontSize(16).text('Financial Summary', { underline: true });
+  //     doc.fontSize(12)
+  //       .text(`Total Origin Amount: $${reportData.summary.amountSummary.total.origin.toFixed(2)}`)
+  //       .text(`Total Destination Amount: $${reportData.summary.amountSummary.total.destination.toFixed(2)}`);
 
-      // Detailed Transactions
-      doc.moveDown().fontSize(16).text('Transaction Details', { underline: true });
-      reportData.transactions.forEach(tx => {
-        doc.fontSize(10)
-          .text(`ID: ${tx.transactionId}`)
-          .text(`Type: ${tx.type}`)
-          .text(`Timestamp: ${new Date(tx.timestamp * 1000).toLocaleString()}`)
-          .text(`Origin User: ${tx.originUserId}`)
-          .text(`Destination User: ${tx.destinationUserId}`)
-          .text(`Description: ${tx.description || 'N/A'}`)
-          .moveDown();
-      });
+  //     // Detailed Transactions
+  //     doc.moveDown().fontSize(16).text('Transaction Details', { underline: true });
+  //     reportData.transactions.forEach(tx => {
+  //       doc.fontSize(10)
+  //         .text(`ID: ${tx.transactionId}`)
+  //         .text(`Type: ${tx.type}`)
+  //         .text(`Timestamp: ${new Date(tx.transaction_timestamp * 1000).toLocaleString()}`)
+  //         .text(`Origin User: ${tx.originUserId}`)
+  //         .text(`Destination User: ${tx.destinationUserId}`)
+  //         .text(`Description: ${tx.description || 'N/A'}`)
+  //         .moveDown();
+  //     });
 
-      doc.end();
+  //     doc.end();
 
-      res.on('finish', resolve);
-      res.on('error', reject);
-    });
-  }
+  //     res.on('finish', resolve);
+  //     res.on('error', reject);
+  //   });
+  // }
 
   /**
    * Comprehensive report generation
    * @param {Object} options 
    * @returns {Promise<Object>} Full report
    */
-  
   async generateReport(options, res) {
     // Fetch transactions
     const { transactions, total, page, pageSize } = 
@@ -264,6 +258,101 @@ class TransactionReporter {
     };
   }
 
+  async generatePDFReport(reportData, res) {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 30 });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
+
+      doc.pipe(res);
+
+      // Title
+      doc.fontSize(24).text('Comprehensive Transaction Report', { align: 'center', underline: true });
+      doc.moveDown(2);
+
+      // Transaction Type Summary
+      doc.fontSize(18).text('Transaction Type Breakdown', { underline: true });
+      doc.moveDown();
+
+      this.addTable(doc, [
+        { label: 'Transaction Type', property: 'type', width: 200 },
+        { label: 'Count', property: 'count', width: 200 }
+      ], Object.entries(reportData.summary.transactionTypes).map(([type, count]) => ({ type, count })));
+
+      doc.addPage();
+
+      // Amount Summary
+      doc.fontSize(18).text('Financial Summary', { underline: true });
+      doc.moveDown();
+
+      this.addTable(doc, [
+        { label: 'Description', property: 'description', width: 200 },
+        { label: 'Amount', property: 'amount', width: 200 }
+      ], [
+        { description: 'Total Origin Amount', amount: `$${reportData.summary.amountSummary.total.origin.toFixed(2)}` },
+        { description: 'Total Destination Amount', amount: `$${reportData.summary.amountSummary.total.destination.toFixed(2)}` }
+      ]);
+
+      doc.addPage();
+
+      // Detailed Transactions
+      doc.fontSize(18).text('Transaction Details', { underline: true });
+      doc.moveDown();
+
+      this.addTable(doc, [
+        { label: 'ID', property: 'transactionId', width: 100 },
+        { label: 'Type', property: 'type', width: 100 },
+        { label: 'Timestamp', property: 'transaction_timestamp', width: 150 },
+        { label: 'Origin User', property: 'originUserId', width: 100 },
+        { label: 'Destination User', property: 'destinationUserId', width: 100 },
+        { label: 'Description', property: 'description', width: 200 }
+      ], reportData.transactions.map(tx => ({
+        transactionId: tx.transactionId,
+        type: tx.type,
+        transaction_timestamp: new Date(tx.transaction_timestamp * 1000).toLocaleString(),
+        originUserId: tx.originUserId,
+        destinationUserId: tx.destinationUserId,
+        description: tx.description || 'N/A'
+      })));
+
+      doc.end();
+
+      res.on('finish', resolve);
+      res.on('error', reject);
+    });
+  }
+
+  addTable(doc, columns, rows) {
+    const tableTop = doc.y;
+    const itemHeight = 20;
+
+    // Draw table header
+    columns.forEach((column, i) => {
+      doc.fontSize(12).text(column.label, 30 + i * column.width, tableTop, { width: column.width, align: 'left' });
+    });
+
+    doc.moveDown();
+
+    // Draw table rows
+    rows.forEach((row, rowIndex) => {
+      const rowTop = tableTop + (rowIndex + 1) * itemHeight;
+
+      if (rowTop + itemHeight > doc.page.height - 30) {
+        doc.addPage();
+        this.addTable(doc, columns, rows.slice(rowIndex));
+        return;
+      }
+
+      columns.forEach((column, i) => {
+        doc.fontSize(10).text(row[column.property], 30 + i * column.width, rowTop, { width: column.width, align: 'left' });
+      });
+    });
+
+    doc.moveDown();
+  }
+
+
   /**
    * Export transactions to CSV
    * @param {Array} transactions 
@@ -272,14 +361,14 @@ class TransactionReporter {
    */
   async exportToCSV(transactions, filepath) {
     return new Promise((resolve, reject) => {
+
       const csvStream = csv.format({ headers: true });
       const writableStream = fs.createWriteStream(filepath);
 
-      // Flatten transaction for CSV
       const flattenedTransactions = transactions.map(tx => ({
         transactionId: tx.transactionId,
         type: tx.type,
-        timestamp: new Date(tx.timestamp * 1000).toISOString(),
+        timestamp: new Date(tx.transaction_timestamp * 1000).toISOString(),
         originUserId: tx.originUserId,
         destinationUserId: tx.destinationUserId,
         originAmount: this.extractAmount(tx.originAmountDetails),
@@ -303,4 +392,3 @@ class TransactionReporter {
 }
 
 module.exports = TransactionReporter;
-
