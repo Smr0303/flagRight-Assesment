@@ -22,8 +22,6 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
 
   // Call the PostgreSQL function to insert the user
 
-  // console.log(userId, salt , hashedPassword, name , email , password, role);
-
   const user = {
     _id: userId,
     _name: name,

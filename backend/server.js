@@ -14,6 +14,8 @@ const app = express();
 // requiring routers
 
 const userRouter = require('./routes/authRoutes');
+const transactionRouter = require("./routes/transactionRoutes");
+const cronRouter = require("./routes/cronRoutes");
 
 // requiring middlewares
 const errorMiddleware = require('./middlewares/error');
@@ -32,6 +34,7 @@ connectToDb();
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use('/tmp', express.static('/tmp'));
 
 // basic api route
 app.get('/', (req, res) => {
@@ -44,6 +47,8 @@ app.get('/', (req, res) => {
 // using routers
 
 app.use('/api/user', userRouter);
+app.use('/api/transaction', transactionRouter);
+app.use('/api/cron',cronRouter);
 
 // using other middlewares
 app.use(errorMiddleware);
