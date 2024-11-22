@@ -28,6 +28,7 @@ class TransactionReporter {
    * @returns {Promise<Object>} Transactions and metadata
    */
   async fetchTransactions(options = {}) {
+
     const { 
       startTimestamp, 
       endTimestamp, 
@@ -39,9 +40,7 @@ class TransactionReporter {
     } = options;
 
     // Construct query using Supabase RPC or direct table query
-    let query = this.supabase
-      .from('transactions')
-      .select('*', { count: 'exact' });
+    let query = this.supabase.from('transactions').select('*', { count: 'exact' });
 
     // Apply filters
     if (startTimestamp) {
@@ -173,57 +172,6 @@ class TransactionReporter {
     return 0;
   }
 
-  /**
-   * Generate PDF report with detailed insights
-   * @param {Object} reportData 
-   * @param {string} filepath 
-   * @returns {Promise<string>} PDF filepath
-   */
-  // async generatePDFReport(reportData, res) {
-  //   return new Promise((resolve, reject) => {
-  //     const doc = new PDFDocument();
-
-  //     res.setHeader('Content-Type', 'application/pdf');
-  //     res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
-
-  //     doc.pipe(res);
-
-  //     // Detailed Report Generation
-  //     doc.fontSize(20).text('Comprehensive Transaction Report', { align: 'center' });
-  //     doc.moveDown();
-
-  //     // Transaction Type Summary
-  //     doc.fontSize(16).text('Transaction Type Breakdown', { underline: true });
-      
-  //     Object.entries(reportData.summary.transactionTypes).forEach(([type, count]) => {
-  //       doc.fontSize(12).text(`${type}: ${count} transactions`);
-  //     });
-
-  //     // Amount Summary
-  //     doc.moveDown().fontSize(16).text('Financial Summary', { underline: true });
-  //     doc.fontSize(12)
-  //       .text(`Total Origin Amount: $${reportData.summary.amountSummary.total.origin.toFixed(2)}`)
-  //       .text(`Total Destination Amount: $${reportData.summary.amountSummary.total.destination.toFixed(2)}`);
-
-  //     // Detailed Transactions
-  //     doc.moveDown().fontSize(16).text('Transaction Details', { underline: true });
-  //     reportData.transactions.forEach(tx => {
-  //       doc.fontSize(10)
-  //         .text(`ID: ${tx.transactionId}`)
-  //         .text(`Type: ${tx.type}`)
-  //         .text(`Timestamp: ${new Date(tx.transaction_timestamp * 1000).toLocaleString()}`)
-  //         .text(`Origin User: ${tx.originUserId}`)
-  //         .text(`Destination User: ${tx.destinationUserId}`)
-  //         .text(`Description: ${tx.description || 'N/A'}`)
-  //         .moveDown();
-  //     });
-
-  //     doc.end();
-
-  //     res.on('finish', resolve);
-  //     res.on('error', reject);
-  //   });
-  // }
 
   /**
    * Comprehensive report generation
@@ -232,8 +180,7 @@ class TransactionReporter {
    */
   async generateReport(options, res) {
     // Fetch transactions
-    const { transactions, total, page, pageSize } = 
-      await this.fetchTransactions(options);
+    const { transactions, total, page, pageSize } = await this.fetchTransactions(options);
 
     // Generate summary
     const summary = this.generateSummary(transactions);
@@ -258,6 +205,15 @@ class TransactionReporter {
     };
   }
 
+  /**
+   * Generate PDF report with detailed insights
+   * @param {Object} reportData 
+   * @param {string} filepath 
+   * @returns {Promise<string>} PDF filepath
+   *
+   * **/
+
+  
   async generatePDFReport(reportData, res) {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 30 });
