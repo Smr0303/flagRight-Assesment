@@ -1,8 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import {Container} from '../components'
 
-// import Demo from '../components/Table';
-
 function Home() {
     const [posts, setPosts] = useState([])
 
