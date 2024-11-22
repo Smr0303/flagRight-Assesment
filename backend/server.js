@@ -31,10 +31,15 @@ process.on('uncaughtException', (err) => {
 connectToDb();
 
 // using middlewares
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+
+  origin: true,
+  credentials: true,
+   
+}));
+
 app.use(cookieParser());
-app.use('/tmp', express.static('/tmp'));
+app.use(express.json());
 
 // basic api route
 app.get('/', (req, res) => {

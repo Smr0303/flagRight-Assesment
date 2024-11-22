@@ -3,9 +3,11 @@ const ErrorHandler = require('../utils/errorHandler');
 const jwt = require('jsonwebtoken');
 const {supabase} = require("../config/db");
 
-exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
 
+exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.cookies;
+
+  console.log(req.cookies);
 
   if (!token) {
     return next(
@@ -13,17 +15,27 @@ exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
     );
   }
 
-  const decodedData = await jwt.verify(token, process.env.JWT_SECRET);
+  try {
 
-//   console.log(decodedData);
+    const decodedData = await jwt.verify(token, process.env.JWT_SECRET);
 
-  const { data: [user], error } = await supabase.rpc('get_user_by_id', { _user_id: decodedData.id });
+    const { data: [user], error } = await supabase.rpc('get_user_by_id', { _user_id: decodedData.id });
 
-  if (!user) new ErrorHandler('User not found', 401);
-  
-  req.user = user;
+    if (error || !user) {
+      return next(new ErrorHandler('User not found', 401));
+    }
 
-  next();
+    req.user = user;
+    next();
+
+  } catch (error) {
+
+    if (error.name === 'TokenExpiredError') {
+      return next(new ErrorHandler('Token expired. Please login again.', 403));
+    }
+
+    return next(new ErrorHandler('Invalid token. Please login again.', 401));
+  }
 });
 
 

@@ -4,8 +4,7 @@ const catchAsyncError = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
 const {supabase} = require("../config/db");
 
-let task,
-  isRunning = false;
+let task, isRunning = false;
 
 const generateTransaction = async () => {
   try {
