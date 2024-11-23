@@ -9,6 +9,7 @@ import Home from "./pages/Home.jsx";
 import { AuthLayout } from "./components/index.js";
 import Login from "./pages/Login.jsx";
 import TransactionPage from "./components/Transaction/TransactionPage.jsx";
+import CreateTransaction from "./components/Transaction/CreateTransaction.jsx";
 
 import Signup from "./pages/Signup";
 
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: `transaction/:id`,
         element: <TransactionPage />,
+      },
+      {
+        path: "/create-transaction",
+        element: <CreateTransaction />,
       }
     ],
   },

@@ -15,6 +15,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import axiosClient from "../utils/axios";
+import CronAndCreateButtons from '../CronButtons';
 
 const TransactionTable = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const TransactionTable = () => {
 
     fetchTransactions();
 
-  }, [data]);
+  }, []);
 
   const handleTransactionClick = (transactionId) => {
     navigate(`/transaction/${transactionId}`);
@@ -121,8 +122,11 @@ const TransactionTable = () => {
   });
 
   return (
+    
     <Box sx={{ width: '100%', p: 3 }}>
       {/* Search and Filter Header */}
+
+      <CronAndCreateButtons/>
       <Box sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           placeholder="Search transactions..."
