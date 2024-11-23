@@ -1,9 +1,10 @@
 import React from "react";
+import logo from "../assets/logo.svg"; // Adjust the path as needed
 
-function Logo({ width = "100px" }) {
+function Logo({ width = "150px" }) {
   return (
-    <div className=" text-blue-900 font-bold text-lg">
-      Flag<span className=" text-orange-600">Right</span>
+    <div className="flex justify-center items-center">
+      <img src={logo} alt="Logo" width={width} height="auto " />
     </div>
   );
 }

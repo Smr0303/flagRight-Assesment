@@ -8,6 +8,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import { AuthLayout } from "./components/index.js";
 import Login from "./pages/Login.jsx";
+import TransactionPage from "./components/Transaction/TransactionPage.jsx";
 
 import Signup from "./pages/Signup";
 
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
         path: "/signup",
         element: <Signup />
       },
+      {
+        path: `transaction/:id`,
+        element: <TransactionPage />,
+      }
     ],
   },
 ]);

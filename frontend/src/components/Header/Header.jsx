@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { startCron, stopCron } from "../../store/authSlice";
 import axiosClient from "../utils/axios";
 
+
 function Header() {
   const authStatus = useSelector((state) => state.auth.status);
   const cronStatus = useSelector((state) => state.auth.cron); // Get the cron state
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
 
   const navItems = [
     {
@@ -37,7 +39,7 @@ function Header() {
           withCredentials: true,
         });
 
-        if(response.status === 200) alert("Job stopped successfully");
+        if (response.status === 200) alert("Job stopped successfully");
 
         console.log(response);
 
@@ -80,13 +82,13 @@ function Header() {
         const response = await axiosClient.post("/cron/startCron", {
           withCredentials: true,
         });
-        
-        if(response.status === 200) alert("Job started successfully");
+
+        if (response.status === 200) alert("Job started successfully");
 
         dispatch(startCron());
       }
       catch (error) {
-       switch (error.status) {
+        switch (error.status) {
           case 400:
             if (error.response.data.message.includes('CRON job is alerady running')) {
               alert('CRON job is alerady running.');
@@ -125,7 +127,7 @@ function Header() {
         <nav className="flex">
           <div className="mr-4 flex justify-center items-center">
             <Link to="/">
-              <Logo width="70px" />
+              <Logo width="150px" />
             </Link>
           </div>
           <ul className="flex ml-auto">
@@ -147,10 +149,6 @@ function Header() {
                 </li>
               ) : null
             )}
-
-            {/* <button onClick={(handleToggleCron)}>
-              {cronStatus ? "Stop Cron" : "Start Cron"}
-            </button> */}
 
             {authStatus && (
               <li>

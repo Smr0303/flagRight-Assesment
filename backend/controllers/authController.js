@@ -86,3 +86,7 @@ exports.logoutUser = catchAsyncError(async (req, res, next) => {
     });
   }
 });
+
+exports.verifyToken = catchAsyncError(async (req, res, next) => {
+  res.status(200).json({ success: true, data: req.user });
+});

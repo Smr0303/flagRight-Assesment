@@ -1,31 +1,55 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import axiosClient from "../utils/axios";
 
 function TransactionPage() {
-  // Transaction data
-  const transaction = {
-    transactionid: "TRANS-98765-XYZ",
-    type: "Digital Transfer",
-    transaction_timestamp: "2024-01-15 14:30:22",
-    originuserid: "USER-12345",
-    destinationuserid: "USER-67890",
-    originamountdetails: "$500.00 USD",
-    destinationamountdetails: "$500.00 USD",
-    promotioncodeused: "WELCOME20",
-    reference: "REF-DIGITAL-TRANSFER",
-    origindevice_data: "iOS/Safari",
-    destinationdevice_data: "Android/Chrome",
-    tags: "Digital, International",
-    description: "Peer-to-Peer Transfer",
-    originemail: "sender@example.com",
-    destinationemail: "receiver@example.com",
-  };
+  const { id } = useParams(); // Get the id from the route parameters
+  const [transaction, setTransaction] = useState(null);
 
-  // Format the timestamp to a more readable format
-  const formattedTimestamp = new Date(
-    transaction.transaction_timestamp
-  ).toLocaleString();
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      try {
+        const response = await axiosClient.get(`/transaction/getTransaction/${id}`);
+        if (response.status === 200) {
+          const data = response.data.data;
 
-  // Function to copy text to clipboard
+          console.log(data);
+
+          // Transform the response data to match the sample object format
+          const transformedTransaction = {
+            transactionid: String(data.transactionid),
+            type: String(data.type),
+            transaction_timestamp: new Date(data.transaction_timestamp).toLocaleString(),
+            originuserid: String(data.originuserid),
+            destinationuserid: String(data.destinationuserid),
+            originamountdetails: `${data.originamountdetails.transactionAmount} ${data.originamountdetails.transactionCurrency}`,
+            destinationamountdetails: `${data.destinationamountdetails.transactionAmount} ${data.destinationamountdetails.transactionCurrency}`,
+            promotioncodeused: String(data.promotioncodeused),
+            reference: String(data.reference),
+            origindevice_data: `${data.origindevicedata.deviceMaker}/${data.origindevicedata.appVersion}`,
+            destinationdevice_data: `${data.destinationdevicedata.deviceMaker}/${data.destinationdevicedata.appVersion}`,
+            tags: data.tags.map(tag => `${tag.value}`).join(', '),
+            description: String(data.description),
+            originemail: String(data.originemail),
+            destinationemail: String(data.destinationemail),
+          };
+
+          setTransaction(transformedTransaction);
+        } else {
+          console.error("Failed to fetch transaction");
+        }
+      } catch (error) {
+        console.error("Error fetching transaction:", error);
+      }
+    };
+
+    fetchTransaction();
+  }, [id]);
+
+  if (!transaction) {
+    return <div>Loading...</div>;
+  }
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert("Copied to clipboard!");
@@ -56,7 +80,7 @@ function TransactionPage() {
           </div>
           <div className="flex justify-between items-center py-3 border-b border-blue-200">
             <div className="text-gray-700 font-medium">Timestamp</div>
-            <div className="text-blue-900 font-semibold">{formattedTimestamp}</div>
+            <div className="text-blue-900 font-semibold">{transaction.transaction_timestamp}</div>
           </div>
         </div>
 

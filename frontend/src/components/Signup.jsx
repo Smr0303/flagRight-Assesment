@@ -60,6 +60,9 @@ function Signup() {
           case 500:
             errorMessage = "Internal server error. Please try again.";
             break;
+          case 403:
+            errorMessage = "You are not authorized to perform this action.";
+            break;
           default:
             if (data && data.message) {
               errorMessage = data.message;

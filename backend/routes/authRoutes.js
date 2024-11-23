@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { registerUser, loginUser, logoutUser } = require("../controllers/authController");
+const { registerUser, loginUser, logoutUser, verifyToken } = require("../controllers/authController");
 const { checkUserAuthentication, checkAdminPrivileges } = require("../middlewares/authMiddleware");
 
 // Define routes using router.route
@@ -17,5 +17,7 @@ router
   .post(loginUser);
 
 router.route('/logout').get(checkUserAuthentication,logoutUser);  
+
+router.route('/verifyToken').get(checkUserAuthentication,verifyToken);
 
 module.exports = router;
