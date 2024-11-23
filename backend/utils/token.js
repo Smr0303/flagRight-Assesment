@@ -13,13 +13,10 @@ exports.sendToken = (user, statusCode, res) => {
   });
 
   const options = {
-
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES * 24 * 60 * 60 * 1000
     ),
-    sameSite: 'none',
-    secure: true,
-  };
+    httpOnly: true,};
 
   res
     .status(statusCode)

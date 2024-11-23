@@ -3,7 +3,7 @@ import { Container, Logo, LogoutBtn } from "../index";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { startCron, stopCron } from "../../store/authSlice"; 
+import { startCron, stopCron } from "../../store/authSlice";
 import axiosClient from "../utils/axios";
 
 function Header() {
@@ -36,11 +36,43 @@ function Header() {
         const response = await axiosClient.post("/cron/stopCron", {
           withCredentials: true,
         });
+
+        if(response.status === 200) alert("Job stopped successfully");
+
         console.log(response);
 
         dispatch(stopCron());
-      } catch (err) {
-        console.error("Error stopping cron job:", err);
+
+      } catch (error) {
+
+        switch (error.status) {
+          case 400:
+            if (error.response.data.message.includes('CRON job is not running')) {
+              alert('CRON job is not running.');
+            }
+            break;
+          case 401:
+            if (error.response.data.message.includes('Please login again')) {
+              alert('Please login again to access this resource');
+            }
+            if (error.response.data.message.includes('User not found')) {
+              alert('User not found');
+            }
+            if (error.response.data.message.includes('Invalid token')) {
+              alert('Invalid token. Please login again.');
+            }
+            break;
+          case 403:
+            if (error.response.data.message.includes('Token expired')) {
+              alert('Token expired. Please login again.');
+            }
+            if (error.response.data.message.includes('Role')) {
+              alert(`Only admins are allowed to control cron job`);
+            }
+            break;
+          default:
+            alert('Internal Server Error');
+        }
       }
     } else {
 
@@ -48,11 +80,40 @@ function Header() {
         const response = await axiosClient.post("/cron/startCron", {
           withCredentials: true,
         });
-        console.log(response);
+        
+        if(response.status === 200) alert("Job started successfully");
+
         dispatch(startCron());
-      } 
-      catch (err) {
-        console.error("Error starting cron job:", err);
+      }
+      catch (error) {
+       switch (error.status) {
+          case 400:
+            if (error.response.data.message.includes('CRON job is alerady running')) {
+              alert('CRON job is alerady running.');
+            }
+            break;
+          case 401:
+            if (error.response.data.message.includes('Please login again')) {
+              alert('Please login again to access this resource');
+            }
+            if (error.response.data.message.includes('User not found')) {
+              alert('User not found');
+            }
+            if (error.response.data.message.includes('Invalid token')) {
+              alert('Invalid token. Please login again.');
+            }
+            break;
+          case 403:
+            if (error.response.data.message.includes('Token expired')) {
+              alert('Token expired. Please login again.');
+            }
+            if (error.response.data.message.includes('Role')) {
+              alert(`Only admins are allowed to control cron job`);
+            }
+            break;
+          default:
+            alert('Internal Server Error');
+        }
       }
     }
   };
@@ -68,12 +129,12 @@ function Header() {
             </Link>
           </div>
           <ul className="flex ml-auto">
-               <button
-                    onClick={handleToggleCron}
-                    className={`inline-block px-4 py-2 duration-200 hover:bg-gray-200 rounded-full ${!cronStatus ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'}`}
-                  >
-                     {cronStatus ? "Stop Cron" : "Start Cron"}
-                  </button>
+            <button
+              onClick={handleToggleCron}
+              className={`inline-block px-4 py-2 duration-200 hover:bg-gray-200 rounded-full ${!cronStatus ? 'bg-blue-500 text-white' : 'bg-red-500 text-white'}`}
+            >
+              {cronStatus ? "Stop Cron" : "Start Cron"}
+            </button>
             {navItems.map((item) =>
               item.active ? (
                 <li key={item.name}>
@@ -86,7 +147,7 @@ function Header() {
                 </li>
               ) : null
             )}
-            
+
             {/* <button onClick={(handleToggleCron)}>
               {cronStatus ? "Stop Cron" : "Start Cron"}
             </button> */}
