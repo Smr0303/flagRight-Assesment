@@ -268,3 +268,72 @@ exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
   // Return the transactions data and the pagination object
   return res.status(200).json({ pagination, data });
 });
+
+exports.getSummary = catchAsyncError(async (req, res, next) => {
+  try {
+    // Fetch all transactions
+    console.log(49823);
+
+    const { data: transactions, error } = await supabase
+      .from("transactions")
+      .select("*");
+
+    if (error) {
+      throw error;
+    }
+
+    // Calculate transaction summary data
+    const totalVolume = transactions.reduce(
+      (sum, transaction) =>
+        sum + transaction.originamountdetails.transactionAmount,
+      0
+    );
+    const totalTransactions = transactions.length;
+    const avgTransactionSize = totalTransactions
+      ? totalVolume / totalTransactions
+      : 0;
+    const completedTransactions = transactions.filter(
+      (transaction) => transaction.status === "Completed"
+    ).length;
+
+    const transactionSummary = {
+      totalVolume,
+      totalTransactions,
+      avgTransactionSize,
+      completedTransactions,
+    };
+
+    // Calculate pie chart data
+    const deposits = transactions.filter(
+      (transaction) => transaction.type === "Deposit"
+    ).length;
+    const withdrawals = transactions.filter(
+      (transaction) => transaction.type === "Withdrawal"
+    ).length;
+    const transfers = transactions.filter(
+      (transaction) => transaction.type === "Transfer"
+    ).length;
+    const payments = transactions.filter(
+      (transaction) => transaction.type === "Payment"
+    ).length;
+
+    const pieChartData = [
+      { name: "Deposits", value: deposits, color: "#0088FE" },
+      { name: "Withdrawals", value: withdrawals, color: "#00C49F" },
+      { name: "Transfers", value: transfers, color: "#FFBB28" },
+      { name: "Payments", value: payments, color: "#FF8042" },
+    ];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactionSummary,
+        pieChartData,
+      },
+    });
+  } 
+  catch (error) {
+    console.error("Error fetching transaction data:", error);
+    throw error;
+  }
+});

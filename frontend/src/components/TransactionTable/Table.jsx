@@ -44,6 +44,12 @@ const TransactionTable = () => {
         const response = await axiosClient.get('/transaction/allTransactions');
         console.log(response.data.data);
 
+        /*Data summary  */
+        const dataSummary = await axiosClient.get('/transaction/getSummary');
+        console.log(dataSummary);
+
+
+
         // Extract the required attributes from the fetched data
         const transformedData = response.data.data.map(transaction => ({
           id: transaction.transactionid,
@@ -54,6 +60,10 @@ const TransactionTable = () => {
         }));
 
         setData(transformedData);
+
+       
+
+
       } catch (err) {
         console.log(err);
       }
