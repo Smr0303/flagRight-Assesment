@@ -214,100 +214,250 @@ class TransactionReporter {
    * **/
 
   
+  // async generatePDFReport(reportData, res) {
+  //   return new Promise((resolve, reject) => {
+  //     const doc = new PDFDocument({ margin: 30 });
+
+  //     res.setHeader('Content-Type', 'application/pdf');
+  //     res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
+
+  //     doc.pipe(res);
+
+  //     // Title
+  //     doc.fontSize(24).text('Comprehensive Transaction Report', { align: 'center', underline: true });
+  //     doc.moveDown(2);
+
+  //     // Transaction Type Summary
+  //     doc.fontSize(18).text('Transaction Type Breakdown', { underline: true });
+  //     doc.moveDown();
+
+  //     this.addTable(doc, [
+  //       { label: 'Transaction Type', property: 'type', width: 200 },
+  //       { label: 'Count', property: 'count', width: 200 }
+  //     ], Object.entries(reportData.summary.transactionTypes).map(([type, count]) => ({ type, count })));
+
+  //     doc.addPage();
+
+  //     // Amount Summary
+  //     doc.fontSize(18).text('Financial Summary', { underline: true });
+  //     doc.moveDown();
+
+  //     this.addTable(doc, [
+  //       { label: 'Description', property: 'description', width: 200 },
+  //       { label: 'Amount', property: 'amount', width: 200 }
+  //     ], [
+  //       { description: 'Total Origin Amount', amount: `$${reportData.summary.amountSummary.total.origin.toFixed(2)}` },
+  //       { description: 'Total Destination Amount', amount: `$${reportData.summary.amountSummary.total.destination.toFixed(2)}` }
+  //     ]);
+
+  //     doc.addPage();
+
+  //     // Detailed Transactions
+  //     doc.fontSize(18).text('Transaction Details', { underline: true });
+  //     doc.moveDown();
+
+  //     this.addTable(doc, [
+  //       { label: 'ID', property: 'transactionId', width: 100 },
+  //       { label: 'Type', property: 'type', width: 100 },
+  //       { label: 'Timestamp', property: 'transaction_timestamp', width: 150 },
+  //       { label: 'Origin User', property: 'originUserId', width: 100 },
+  //       { label: 'Destination User', property: 'destinationUserId', width: 100 },
+  //       { label: 'Description', property: 'description', width: 200 }
+  //     ], reportData.transactions.map(tx => ({
+  //       transactionId: tx.transactionId,
+  //       type: tx.type,
+  //       transaction_timestamp: new Date(tx.transaction_timestamp * 1000).toLocaleString(),
+  //       originUserId: tx.originUserId,
+  //       destinationUserId: tx.destinationUserId,
+  //       description: tx.description || 'N/A'
+  //     })));
+
+  //     doc.end();
+
+  //     res.on('finish', resolve);
+  //     res.on('error', reject);
+  //   });
+  // }
+
+  // addTable(doc, columns, rows) {
+  //   const tableTop = doc.y;
+  //   const itemHeight = 20;
+
+  //   // Draw table header
+  //   columns.forEach((column, i) => {
+  //     doc.fontSize(12).text(column.label, 30 + i * column.width, tableTop, { width: column.width, align: 'left' });
+  //   });
+
+  //   doc.moveDown();
+
+  //   // Draw table rows
+  //   rows.forEach((row, rowIndex) => {
+  //     const rowTop = tableTop + (rowIndex + 1) * itemHeight;
+
+  //     if (rowTop + itemHeight > doc.page.height - 30) {
+  //       doc.addPage();
+  //       this.addTable(doc, columns, rows.slice(rowIndex));
+  //       return;
+  //     }
+
+  //     columns.forEach((column, i) => {
+  //       doc.fontSize(10).text(row[column.property], 30 + i * column.width, rowTop, { width: column.width, align: 'left' });
+  //     });
+  //   });
+
+  //   doc.moveDown();
+  // }
   async generatePDFReport(reportData, res) {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 30 });
+      const doc = new PDFDocument({
+        margin: 40,
+        size: "A4",
+      });
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename="transaction_report.pdf"');
+      const colors = {
+        primary: "#2563eb",
+        text: "#1f2937",
+        border: "#e5e7eb",
+      };
 
+      doc.fillColor(colors.text).font("Helvetica").fontSize(12);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="transaction_report.pdf"'
+      );
       doc.pipe(res);
 
+      const drawTable = (doc, columns, data) => {
+        const tableTop = doc.y;
+        const startX = 50;
+        const rowHeight = 20;
+
+        // Table Header
+        doc.fillColor(colors.primary).fontSize(14).font("Helvetica-Bold");
+
+        columns.forEach((col, i) => {
+          doc.text(
+            col.label,
+            startX + columns.slice(0, i).reduce((a, b) => a + b.width, 0),
+            tableTop,
+            {
+              width: col.width,
+              align: "center",
+            }
+          );
+        });
+
+        // Table Rows
+        doc.fillColor(colors.text).fontSize(10).font("Helvetica").moveDown(0.5);
+
+        data.forEach((row, rowIndex) => {
+          const y = tableTop + (rowIndex + 1) * rowHeight;
+          columns.forEach((col, colIndex) => {
+            doc.text(
+              String(row[col.property]),
+              startX +
+                columns.slice(0, colIndex).reduce((a, b) => a + b.width, 0),
+              y,
+              {
+                width: col.width,
+                align: "center",
+              }
+            );
+          });
+        });
+
+        doc.y = tableTop + (data.length + 1) * rowHeight + 20;
+      };
+
       // Title
-      doc.fontSize(24).text('Comprehensive Transaction Report', { align: 'center', underline: true });
+      doc
+        .fontSize(24)
+        .fillColor(colors.primary)
+        .text("Comprehensive Transaction Report", {
+          align: "center",
+          underline: true,
+        });
       doc.moveDown(2);
 
       // Transaction Type Summary
-      doc.fontSize(18).text('Transaction Type Breakdown', { underline: true });
-      doc.moveDown();
-
-      this.addTable(doc, [
-        { label: 'Transaction Type', property: 'type', width: 200 },
-        { label: 'Count', property: 'count', width: 200 }
-      ], Object.entries(reportData.summary.transactionTypes).map(([type, count]) => ({ type, count })));
-
-      doc.addPage();
+      doc
+        .fontSize(18)
+        .fillColor(colors.text)
+        .text("Transaction Type Breakdown", {
+          align: "right", // Already centered
+          underline: true,
+        });
+      doc.moveDown(1.5); // Increased spacing
+      drawTable(
+        doc,
+        [
+          { label: "Transaction Type", property: "type", width: 300 },
+          { label: "Count", property: "count", width: 200 },
+        ],
+        Object.entries(reportData.summary.transactionTypes).map(
+          ([type, count]) => ({ type, count })
+        )
+      );
+      doc.moveDown(2); // Added extra vertical space between sections
 
       // Amount Summary
-      doc.fontSize(18).text('Financial Summary', { underline: true });
-      doc.moveDown();
-
-      this.addTable(doc, [
-        { label: 'Description', property: 'description', width: 200 },
-        { label: 'Amount', property: 'amount', width: 200 }
-      ], [
-        { description: 'Total Origin Amount', amount: `$${reportData.summary.amountSummary.total.origin.toFixed(2)}` },
-        { description: 'Total Destination Amount', amount: `$${reportData.summary.amountSummary.total.destination.toFixed(2)}` }
-      ]);
-
-      doc.addPage();
+      doc.fontSize(18).fillColor(colors.text).text("Financial Summary", {
+        align: "left", // Already centered
+        underline: true,
+      });
+      doc.moveDown(1.5); // Increased spacing
+      drawTable(
+        doc,
+        [
+          { label: "Description", property: "description", width: 300 },
+          { label: "Amount", property: "amount", width: 200 },
+        ],
+        [
+          {
+            description: "Total Origin Amount",
+            amount: `$${reportData.summary.amountSummary.total.origin.toFixed(
+              2
+            )}`,
+          },
+          {
+            description: "Total Destination Amount",
+            amount: `$${reportData.summary.amountSummary.total.destination.toFixed(
+              2
+            )}`,
+          },
+        ]
+      );
+      doc.moveDown(2); // Added extra vertical space between sections
 
       // Detailed Transactions
-      doc.fontSize(18).text('Transaction Details', { underline: true });
-      doc.moveDown();
-
-      this.addTable(doc, [
-        { label: 'ID', property: 'transactionId', width: 100 },
-        { label: 'Type', property: 'type', width: 100 },
-        { label: 'Timestamp', property: 'transaction_timestamp', width: 150 },
-        { label: 'Origin User', property: 'originUserId', width: 100 },
-        { label: 'Destination User', property: 'destinationUserId', width: 100 },
-        { label: 'Description', property: 'description', width: 200 }
-      ], reportData.transactions.map(tx => ({
-        transactionId: tx.transactionId,
-        type: tx.type,
-        transaction_timestamp: new Date(tx.transaction_timestamp * 1000).toLocaleString(),
-        originUserId: tx.originUserId,
-        destinationUserId: tx.destinationUserId,
-        description: tx.description || 'N/A'
-      })));
+      doc.fontSize(18).fillColor(colors.text).text("Transaction Details", {
+        align: "center", // Already centered
+        underline: true,
+      });
+      doc.moveDown(1.5); // Increased spacing
+      drawTable(
+        doc,
+        [
+          { label: "ID", property: "transactionId", width: 150 },
+          { label: "Type", property: "type", width: 150 },
+          { label: "Timestamp", property: "transaction_timestamp", width: 200 },
+        ],
+        reportData.transactions.map((tx) => ({
+          transactionId: tx.transactionId,
+          type: tx.type,
+          transaction_timestamp: new Date(
+            tx.transaction_timestamp * 1000
+          ).toLocaleString(),
+        }))
+      );
 
       doc.end();
-
-      res.on('finish', resolve);
-      res.on('error', reject);
+      res.on("finish", resolve);
+      res.on("error", reject);
     });
   }
-
-  addTable(doc, columns, rows) {
-    const tableTop = doc.y;
-    const itemHeight = 20;
-
-    // Draw table header
-    columns.forEach((column, i) => {
-      doc.fontSize(12).text(column.label, 30 + i * column.width, tableTop, { width: column.width, align: 'left' });
-    });
-
-    doc.moveDown();
-
-    // Draw table rows
-    rows.forEach((row, rowIndex) => {
-      const rowTop = tableTop + (rowIndex + 1) * itemHeight;
-
-      if (rowTop + itemHeight > doc.page.height - 30) {
-        doc.addPage();
-        this.addTable(doc, columns, rows.slice(rowIndex));
-        return;
-      }
-
-      columns.forEach((column, i) => {
-        doc.fontSize(10).text(row[column.property], 30 + i * column.width, rowTop, { width: column.width, align: 'left' });
-      });
-    });
-
-    doc.moveDown();
-  }
-
 
   /**
    * Export transactions to CSV

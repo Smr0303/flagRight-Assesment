@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import {Container} from '../components'
+import TransactionPage from '../components/Transaction/TransactionPage'
 
 function Home() {
     const [posts, setPosts] = useState([])
@@ -38,8 +39,9 @@ function Home() {
                             
                         </div>
                     ))}
-                     <h1> Hey i am here to learn</h1>
+                     {/* <h1> Hey i am here to learn</h1> */}
                      {/* <Demo/> */}
+                     <TransactionPage/>
                 </div>
             </Container>
         </div>
