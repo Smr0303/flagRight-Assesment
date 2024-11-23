@@ -68,6 +68,8 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
   } = req.body;
 
   // Perform necessary checks
+
+  console.log(req.body);
   if (
     !type ||
     !destinationUserId ||
@@ -117,8 +119,6 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 
   if (error) return next(new ErrorHandler(error.message, 500));
 
-  console.log(data);
-
   res.status(200).json({
     success: true,
     data: transactionObj,
@@ -137,8 +137,6 @@ exports.fetchTransaction = catchAsyncError(async (req, res, next) => {
     .eq("transactionid", transactionId);
 
   if (error) return next(new ErrorHandler(error.message, 500));
-
-  console.log(data);
 
   if (data.length === 0)
     return next(new ErrorHandler("Transaction not found", 404));
@@ -227,7 +225,7 @@ exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
     .from("transactions")
     .select("*", { count: "exact", head: true });
 
-  console.log(count);
+  // console.log("here us the",count);
 
   if (countError)
     return next(new ErrorHandler("Error fetching transaction count", 500));

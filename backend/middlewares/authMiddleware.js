@@ -7,8 +7,6 @@ const {supabase} = require("../config/db");
 exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
   const { token } = req.cookies;
 
-  console.log(req.cookies);
-
   if (!token) {
     return next(
       new ErrorHandler('Please login again to access this resource', 401)
@@ -42,8 +40,6 @@ exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
 exports.checkAdminPrivileges = (...allowedRoles) => {
 
   return (req, res, next) => {
-
-    console.log(req);
 
     const userRole = req.user.user_role;
 

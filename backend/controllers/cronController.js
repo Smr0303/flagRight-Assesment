@@ -10,15 +10,15 @@ const generateTransaction = async () => {
   try {
     const transaction = generateRandomTransaction();
 
-    console.log(transaction);
-
     const { data, error } = await supabase.rpc(
       "insert_transaction",
       transaction
     );
 
     if (error) console.log("Error inserting transaction:", error);
+
     else console.log("Transaction inserted successfully:", data);
+    
   } catch (err) {
     console.log(err);
   }
