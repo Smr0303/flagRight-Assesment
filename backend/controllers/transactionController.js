@@ -283,15 +283,17 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
     }
 
     // Calculate transaction summary data
-    const totalVolume = transactions.reduce(
-      (sum, transaction) =>
-        sum + transaction.originamountdetails.transactionAmount,
-      0
-    );
+    const totalVolume = transactions.reduce((sum, transaction) => {
+      const amount = transaction.originamountdetails?.transactionAmount || 0;
+      return sum + amount;
+    }, 0);
+  
+    // Calculate total transactions
     const totalTransactions = transactions.length;
-    const avgTransactionSize = totalTransactions
-      ? totalVolume / totalTransactions
-      : 0;
+  
+    // Calculate average transaction size
+    const avgTransactionSize = totalTransactions ? totalVolume / totalTransactions : 0;
+
     const completedTransactions = transactions.filter(
       (transaction) => transaction.status === "Completed"
     ).length;
@@ -302,6 +304,8 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
       avgTransactionSize,
       completedTransactions,
     };
+
+    console.log(transactionSummary);
 
     // Calculate pie chart data
     const deposits = transactions.filter(

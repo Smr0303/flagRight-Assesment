@@ -1,7 +1,7 @@
-import React, { useState , useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
+  Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent,
   DialogTitle, FormControl, Grid, IconButton, InputAdornment, InputLabel,
   MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer,
   TableHead, TablePagination, TableRow, TableSortLabel, TextField, Typography
@@ -33,8 +33,14 @@ const TransactionTable = () => {
     minAmount: '',
     maxAmount: ''
   });
+  const [transactionSummary, setTransactionSummary] = useState({
+    totalVolume: 150000,
+    totalTransactions: 45,
+    avgTransactionSize: 3333.33,
+    completedTransactions: 40
+  });
+  const [pieChartData, setPieChartData] = useState([]);
 
- 
   // Sample data - replace with your actual data
   const [data, setData] = useState([]);
 
@@ -43,12 +49,6 @@ const TransactionTable = () => {
       try {
         const response = await axiosClient.get('/transaction/allTransactions');
         console.log(response.data.data);
-
-        /*Data summary  */
-        const dataSummary = await axiosClient.get('/transaction/getSummary');
-        console.log(dataSummary);
-
-
 
         // Extract the required attributes from the fetched data
         const transformedData = response.data.data.map(transaction => ({
@@ -61,8 +61,24 @@ const TransactionTable = () => {
 
         setData(transformedData);
 
-       
 
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    const fetchTransactionSummaryAndPieChartData = async () => {
+
+      try {
+        const response = await axiosClient.get('/transaction/getSummary');
+
+        setTransactionSummary(response.data.data.transactionSummary || {
+          totalVolume: 0,
+          totalTransactions: 0,
+          avgTransactionSize: 0,
+          completedTransactions: 0
+        });
+        setPieChartData(response.data.data.pieChartData || []);
 
       } catch (err) {
         console.log(err);
@@ -70,6 +86,7 @@ const TransactionTable = () => {
     };
 
     fetchTransactions();
+    fetchTransactionSummaryAndPieChartData();
 
   }, []);
 
@@ -99,30 +116,56 @@ const TransactionTable = () => {
   };
 
   const handleSearch = () => {
-    // Implement search logic
+    const filteredData = data.filter(transaction =>
+      transaction.id.includes(searchQuery) ||
+      transaction.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.status.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setData(filteredData);
   };
 
   const exportToCSV = () => {
-    // Implement CSV export logic
+    const csvData = data.map(transaction => ({
+      ID: transaction.id,
+      Date: transaction.date,
+      Type: transaction.type,
+      Amount: transaction.amount,
+      Status: transaction.status
+    }));
+
+    const csvContent = [
+      ['ID', 'Date', 'Type', 'Amount', 'Status'],
+      ...csvData.map(row => [row.ID, row.Date, row.Type, row.Amount, row.Status])
+    ]
+      .map(e => e.join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'transactions.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Sample transaction summary data
-  const transactionSummary = {
-    totalVolume: 150000,
-    totalTransactions: 45,
-    avgTransactionSize: 3333.33,
-    completedTransactions: 40
-  };
+  // const transactionSummary = {
+  //   totalVolume: 150000,
+  //   totalTransactions: 45,
+  //   avgTransactionSize: 3333.33,
+  //   completedTransactions: 40
+  // };
 
-  // Sample pie chart data
-  const pieChartData = [
-    { name: 'Deposits', value: 40, color: '#0088FE' },
-    { name: 'Withdrawals', value: 30, color: '#00C49F' },
-    { name: 'Transfers', value: 20, color: '#FFBB28' },
-    { name: 'Payments', value: 10, color: '#FF8042' }
-  ];
+  // // Sample pie chart data
+  // const pieChartData = [
+  //   { name: 'Deposits', value: 40, color: '#0088FE' },
+  //   { name: 'Withdrawals', value: 30, color: '#00C49F' },
+  //   { name: 'Transfers', value: 20, color: '#FFBB28' },
+  //   { name: 'Payments', value: 10, color: '#FF8042' }
+  // ];
 
-  
+
   const filteredAndSortedData = data.slice().sort((a, b) => {
     const compareValue = order === 'asc' ? 1 : -1;
     if (orderBy === 'amount') {
@@ -132,11 +175,11 @@ const TransactionTable = () => {
   });
 
   return (
-    
+
     <Box sx={{ width: '100%', p: 3 }}>
       {/* Search and Filter Header */}
 
-      <CronAndCreateButtons/>
+      <CronAndCreateButtons />
       <Box sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1, display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           placeholder="Search transactions..."
@@ -164,8 +207,8 @@ const TransactionTable = () => {
       </Box>
 
       {/* Filter Dialog */}
-      <Dialog 
-        open={filterDialogOpen} 
+      <Dialog
+        open={filterDialogOpen}
         onClose={() => setFilterDialogOpen(false)}
         maxWidth="sm"
         fullWidth
@@ -341,31 +384,31 @@ const TransactionTable = () => {
         <Grid item xs={12} md={6}>
           <Card sx={{ height: '100%', minHeight: 450 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h5" gutterBottom>
                 Transaction Summary
               </Typography>
-              <Grid container spacing={2} sx={{ mt: 4 }}>
+              <Grid container spacing={4} sx={{ mt: 4 }}>
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <AccountBalance sx={{ mr: 1, color: 'primary.main' }} />
+                    <AccountBalance sx={{ mr: 2, fontSize: 30, color: 'primary.main' }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle1" color="text.secondary">
                         Total Volume
                       </Typography>
-                      <Typography variant="h6">
-                        ${transactionSummary.totalVolume.toLocaleString()}
+                      <Typography variant="h5">
+                        ${transactionSummary.totalVolume?.toLocaleString() || 0}
                       </Typography>
                     </Box>
                   </Box>
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <SwapHoriz sx={{ mr: 1, color: 'primary.main' }} />
+                    <SwapHoriz sx={{ mr: 2, fontSize: 30, color: 'primary.main' }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle1" color="text.secondary">
                         Total Transactions
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant="h4">
                         {transactionSummary.totalTransactions}
                       </Typography>
                     </Box>
@@ -373,25 +416,25 @@ const TransactionTable = () => {
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <TrendingUp sx={{ mr: 1, color: 'primary.main' }} />
+                    <TrendingUp sx={{ mr: 2, fontSize: 30, color: 'primary.main' }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle1" color="text.secondary">
                         Average Size
                       </Typography>
-                      <Typography variant="h6">
-                        ${transactionSummary.avgTransactionSize.toFixed(2)}
+                      <Typography variant="h4">
+                        ${transactionSummary.avgTransactionSize?.toFixed(2) || 0}
                       </Typography>
                     </Box>
                   </Box>
                 </Grid>
                 <Grid item xs={6}>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <Assessment sx={{ mr: 1, color: 'primary.main' }} />
+                    <Assessment sx={{ mr: 2, fontSize: 30, color: 'primary.main' }} />
                     <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
+                      <Typography variant="subtitle1" color="text.secondary">
                         Completed
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant="h4">
                         {transactionSummary.completedTransactions}
                       </Typography>
                     </Box>

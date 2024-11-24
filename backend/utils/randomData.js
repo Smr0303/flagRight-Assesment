@@ -41,7 +41,7 @@ const generateRandomTransaction = () => {
 
   const obj = {
     p_transactionid: uuidv4(),
-    p_type: generateRandomData.randomArrayElement(['Deposit', 'Withdrawal', 'Transfer']),
+    p_type: generateRandomData.randomArrayElement(['Deposit', 'Withdrawals', 'Transfers', 'Payments']),
     p_timestamp: Date.now(),
     p_originuserid: `user_${generateRandomData.randomNumber(1000, 9999)}`, // String
     p_destinationuserid: `user_${generateRandomData.randomNumber(1000, 9999)}`, // String

@@ -32,7 +32,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
-const TRANSACTION_TYPES = ['PAYMENT', 'WITHDRAWAL', 'REFUND', 'TRANSFER'];
+const TRANSACTION_TYPES = ['PAYMENT', 'WITHDRAWAL', 'PAYMENTS', 'TRANSFER'];
 
 const TransactionForm = () => {
 
