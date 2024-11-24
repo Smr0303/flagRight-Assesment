@@ -47,8 +47,19 @@ const TransactionTable = () => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await axiosClient.get('/transaction/allTransactions');
+        const response = await axiosClient.get('/transaction/allTransactions', {
+
+          params: {
+
+            page: 1,
+            per_page: 10,
+            current_user_id: null,
+            export_all: false
+          }
+        });
+
         console.log(response.data.data);
+
 
         // Extract the required attributes from the fetched data
         const transformedData = response.data.data.map(transaction => ({
@@ -124,46 +135,111 @@ const TransactionTable = () => {
     setData(filteredData);
   };
 
-  const exportToCSV = () => {
-    const csvData = data.map(transaction => ({
-      ID: transaction.id,
-      Date: transaction.date,
-      Type: transaction.type,
-      Amount: transaction.amount,
-      Status: transaction.status
-    }));
+  const exportToCSV = async () => {
+    try {
 
-    const csvContent = [
-      ['ID', 'Date', 'Type', 'Amount', 'Status'],
-      ...csvData.map(row => [row.ID, row.Date, row.Type, row.Amount, row.Status])
-    ]
-      .map(e => e.join(','))
-      .join('\n');
+      const response = await axiosClient.get('/transaction/allTransactions', {
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', 'transactions.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+        params: {
+          page: 0,
+          per_page: 0,
+          current_user_id: null,
+          export_all: true
+        }
+
+      });
+
+      const transactions = response.data.data;
+
+
+      const tempData = transactions.map(transaction => ({
+        TransactionID: transaction.transactionid,
+        Type: transaction.type,
+        Timestamp: new Date(transaction.transaction_timestamp).toLocaleString(),
+        Description: transaction.description,
+        Reference: transaction.reference,
+        // Origin Details
+        OriginUserID: transaction.originuserid,
+        OriginEmail: transaction.originemail,
+        OriginCountry: transaction.originamountdetails.country,
+        OriginAmount: transaction.originamountdetails.transactionAmount,
+        OriginCurrency: transaction.originamountdetails.transactionCurrency,
+        OriginIP: transaction.origindevicedata.ipAddress,
+        OriginDevice: transaction.origindevicedata.deviceMaker,
+        // Destination Details
+        DestinationUserID: transaction.destinationuserid,
+        DestinationEmail: transaction.destinationemail,
+        DestinationCountry: transaction.destinationamountdetails.country,
+        DestinationAmount: transaction.destinationamountdetails.transactionAmount,
+        DestinationCurrency: transaction.destinationamountdetails.transactionCurrency,
+        DestinationIP: transaction.destinationdevicedata.ipAddress,
+        DestinationDevice: transaction.destinationdevicedata.deviceMaker,
+        // Additional Info
+        PromotionUsed: transaction.promotioncodeused ? 'Yes' : 'No'
+      }));
+
+      console.log(tempData);
+
+      const headers = [
+        'TransactionID',
+        'Type',
+        'Timestamp',
+        'Description',
+        'Reference',
+        'OriginUserID',
+        'OriginEmail',
+        'OriginCountry',
+        'OriginAmount',
+        'OriginCurrency',
+        'OriginIP',
+        'OriginDevice',
+        'DestinationUserID',
+        'DestinationEmail',
+        'DestinationCountry',
+        'DestinationAmount',
+        'DestinationCurrency',
+        'DestinationIP',
+        'DestinationDevice',
+        'PromotionUsed'
+      ];
+
+      const csvContent = [
+        headers,
+        ...tempData.map(row => headers.map(header => row[header]))
+      ]
+        .map(e => e.join(','))
+        .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'transactions.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  // Sample transaction summary data
-  // const transactionSummary = {
-  //   totalVolume: 150000,
-  //   totalTransactions: 45,
-  //   avgTransactionSize: 3333.33,
-  //   completedTransactions: 40
-  // };
+  const handlePdfDownload = async () => {
 
-  // // Sample pie chart data
-  // const pieChartData = [
-  //   { name: 'Deposits', value: 40, color: '#0088FE' },
-  //   { name: 'Withdrawals', value: 30, color: '#00C49F' },
-  //   { name: 'Transfers', value: 20, color: '#FFBB28' },
-  //   { name: 'Payments', value: 10, color: '#FF8042' }
-  // ];
+    try {
+      
+      const response = await axiosClient.get('/transaction/getTransactionReport', {
+        responseType: 'blob', // Ensures the response is treated as binary
+      });
+
+      const url = window.URL.createObjectURL(response.data);
+
+      window.open(url);
+
+    }
+    catch (err) {
+
+      console.log(err);
+    }
+  }
 
 
   const filteredAndSortedData = data.slice().sort((a, b) => {
@@ -201,7 +277,7 @@ const TransactionTable = () => {
         <IconButton onClick={exportToCSV} title="Export to CSV">
           <Download />
         </IconButton>
-        <IconButton title="Export to PDF">
+        <IconButton onClick={handlePdfDownload} title="Download Transaction Summary">
           <PictureAsPdf />
         </IconButton>
       </Box>

@@ -2,9 +2,9 @@ const { supabase } = require("../config/db");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
 const { v4: uuidv4 } = require("uuid");
-const TransactionReporter = require("../utils/reportHandler");
-const path = require("path");
 const z = require("zod");
+const { generatePDF,getTransactionData } = require('../utils/pdfHandler');
+
 
 // Zod validation schemas
 const DeviceDataSchema = z.object({
@@ -147,20 +147,6 @@ exports.fetchTransaction = catchAsyncError(async (req, res, next) => {
   });
 });
 
-exports.getReport = catchAsyncError(async (req, res, next) => {
-  const reporter = new TransactionReporter();
-
-  // Generate report data
-  const reportData = await reporter.generateReport(
-    {
-      startDate: new Date(req.query.startDate),
-      endDate: new Date(req.query.endDate),
-      type: req.query.type,
-    },
-    res
-  );
-});
-
 exports.searchTransaction = catchAsyncError(async (req, res, next) => {
   const searchParams = z
     .object({
@@ -212,67 +198,119 @@ exports.searchTransaction = catchAsyncError(async (req, res, next) => {
   });
 });
 
+
 exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
-  let { page = 1, per_page = 10, current_user_id = null } = req.query;
+
+  let { 
+    page = 1, 
+    per_page = 10, 
+    current_user_id = null,// New parameter to determine if all records are needed
+
+  } = req.query;
+
+   const export_all = (req.query.export_all === "true");
 
   // Check minimum and maximum values for page and per_page
-  if (page < 1) page = 1;
-  if (per_page < 1) per_page = 1;
-  if (per_page > 50) per_page = 50;
 
-  // Fetch the total count of transactions
-  const { count, error: countError } = await supabase
-    .from("transactions")
-    .select("*", { count: "exact", head: true });
+  if (!export_all) {
 
-  // console.log("here us the",count);
+    if (page < 1) page = 1;
+    if (per_page < 1) per_page = 1;
+    if (per_page > 50) per_page = 50;
+    
+  }
 
-  if (countError)
+  // Base query for both total count and data fetch
+  let countQuery = supabase.from("transactions").select('*', { 
+    count: "exact", 
+    head: true 
+  });
+
+  if (current_user_id) {
+    countQuery = countQuery.eq('user_id', current_user_id);
+  }
+
+  const { count,  countError } = await countQuery;
+
+  console.log(count);
+
+  if (countError) {
+
+    console.error("Count error:", countError);
     return next(new ErrorHandler("Error fetching transaction count", 500));
 
-  // Calculate the maximum page number
-  const maxPageNumber = Math.ceil(count / per_page);
+  }
 
-  if (page > maxPageNumber) page = maxPageNumber;
+  else if (count === null) {
 
-  // Fetch the paginated transactions
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .order("transaction_timestamp", { ascending: false })
-    .range((page - 1) * per_page, page * per_page - 1);
+    console.error("Count is null, something went wrong");
+    return next(new ErrorHandler("Error calculating total count", 500));
+  }
+  let dataQuery = supabase
+  .from("transactions")
+  .select("*")
+  .order('transaction_timestamp', { ascending: false });
+  
+  if (current_user_id) dataQuery = dataQuery.eq('user_id', current_user_id);
 
-  if (error) {
+  // Apply pagination if not exporting all
+  if (!export_all) {
+
+    const maxPageNumber = Math.ceil(count / per_page);
+
+    if (page > maxPageNumber) page = maxPageNumber;
+
+    dataQuery = dataQuery.range((page - 1) * per_page, page * per_page - 1);
+
+  }
+
+  // Fetch the actual data
+  const { data,  dataError } = await dataQuery;
+
+
+  if (dataError) {
+    console.error("Data fetch error:", dataError);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error.message,
+      error: dataError.message,
+    });
+  }
+  
+
+  // Generate response based on whether it's an export or paginated request
+  if (export_all) {
+    return res.status(200).json({ 
+      success: true,
+      total: count,
+      data 
     });
   }
 
-  // Generate the pagination object
+  // Generate the pagination object for paginated requests
   const pagination = {
     page: parseInt(page),
     per_page: parseInt(per_page),
     total: count,
     total_pages: Math.ceil(count / parseInt(per_page)),
     next_page_available: parseInt(page) < Math.ceil(count / parseInt(per_page)),
-    next_page:
-      parseInt(page) < Math.ceil(count / parseInt(per_page))
-        ? parseInt(page) + 1
-        : null,
+    next_page: parseInt(page) < Math.ceil(count / parseInt(per_page))
+      ? parseInt(page) + 1
+      : null,
     previous_page_available: parseInt(page) > 1,
     previous_page: parseInt(page) > 1 ? parseInt(page) - 1 : null,
   };
 
-  // Return the transactions data and the pagination object
-  return res.status(200).json({ pagination, data });
+  return res.status(200).json({ 
+    success: true,
+    pagination, 
+    data 
+  });
 });
+
 
 exports.getSummary = catchAsyncError(async (req, res, next) => {
   try {
-    // Fetch all transactions
-    console.log(49823);
 
     const { data: transactions, error } = await supabase
       .from("transactions")
@@ -305,7 +343,7 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
       completedTransactions,
     };
 
-    console.log(transactionSummary);
+    // console.log(transactionSummary);
 
     // Calculate pie chart data
     const deposits = transactions.filter(
@@ -341,3 +379,60 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
     throw error;
   }
 });
+
+
+exports.getTransactionReport = async (req, res) => {
+  try {
+      const { startDate, endDate, transactionType } = req.query;
+      
+      // Get transaction data from database
+      const transactionData = await getTransactionData(startDate, endDate, transactionType);
+
+      // console.log(transactionData,"Here i sam manik");
+      
+      // Validate and clean transaction data
+      const validTransactions = transactionData.filter(t => 
+        t && 
+        t.originamountdetails && 
+        typeof t.originamountdetails.transactionAmount === 'number' && 
+        !isNaN(t.originamountdetails.transactionAmount)
+    );
+      
+      // Calculate summary with validated data
+      const summary = {
+        totalTransactions: validTransactions.length,
+        totalVolume: validTransactions.reduce((sum, t) => 
+            sum + t.originamountdetails.transactionAmount, 0
+        ),
+        top4Transactions: validTransactions
+            .sort((a, b) => 
+                b.originamountdetails.transactionAmount - a.originamountdetails.transactionAmount
+            )
+            .slice(0, 3)
+            .map(t => ({
+                transactionId: t.transactionid,
+                amount: Number(t.originamountdetails.transactionAmount),
+                currency: t.originamountdetails.transactionCurrency,
+                type: t.type,
+                timestamp: t.transaction_timestamp,
+                reference: t.reference || 'No reference',
+                originCountry: t.originamountdetails.country,
+                destinationCountry: t.destinationamountdetails.country,
+                originUser: t.originuserid,
+                destinationUser: t.destinationuserid
+            }))
+    };
+      
+      // Generate PDF
+      const pdfBuffer = await generatePDF(summary);
+      
+      // Send PDF as download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=transaction-summary.pdf');
+      res.status(200).send(pdfBuffer);
+      
+  } catch (error) {
+      console.error('Error generating transaction summary:', error);
+      res.status(500).json({ error: 'Failed to generate transaction summary' });
+  }
+};
