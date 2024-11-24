@@ -5,10 +5,10 @@ const { supabase } = require("../config/db");
 const ErrorHandler = require("../utils/errorHandler");
 const { sendToken } = require("../utils/token");
 
+/*Function to register User */
+
 exports.registerUser = catchAsyncError(async (req, res, next) => {
   const { name, email, password, role } = req.body;
-
-  console.log(name, email, password, typeof role);
 
   if (!name || !email || !password || typeof role !== "number") {
     return next(new ErrorHandler("Missing or invalid fields", 400));
@@ -39,6 +39,8 @@ exports.registerUser = catchAsyncError(async (req, res, next) => {
   });
 });
 
+/*Function for User login */
+
 exports.loginUser = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -68,6 +70,8 @@ exports.loginUser = catchAsyncError(async (req, res, next) => {
   sendToken(userData, 200, res);
 });
 
+/*Function to logout the user */
+
 exports.logoutUser = catchAsyncError(async (req, res, next) => {
   try {
     res.cookie("token", null, {
@@ -86,6 +90,8 @@ exports.logoutUser = catchAsyncError(async (req, res, next) => {
     });
   }
 });
+
+/*Function to verify the validity of user jwt token */
 
 exports.verifyToken = catchAsyncError(async (req, res, next) => {
   res.status(200).json({ success: true, data: req.user });

@@ -2,9 +2,10 @@ const cron = require("node-cron");
 const generateRandomTransaction = require("../utils/randomData");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
-const {supabase} = require("../config/db");
+const { supabase } = require("../config/db");
 
-let task, isRunning = false;
+let task,
+  isRunning = false;
 
 const generateTransaction = async () => {
   try {
@@ -16,9 +17,6 @@ const generateTransaction = async () => {
     );
 
     if (error) console.log("Error inserting transaction:", error);
-
-    else console.log("Transaction inserted successfully:", data);
-    
   } catch (err) {
     console.log(err);
   }
@@ -26,11 +24,8 @@ const generateTransaction = async () => {
 
 // Start the CRON job
 exports.startCronJob = catchAsyncError(async (req, res) => {
-
   if (isRunning)
     return res.status(400).json({ message: "CRON job is already running." });
-
-  console.log("Starting CRON job1");
 
   task = cron.schedule("* * * * * *", generateTransaction);
   task.start();

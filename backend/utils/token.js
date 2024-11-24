@@ -1,11 +1,9 @@
-// token.js
 const jwt = require("jsonwebtoken");
 
 // Create JWT token and save as a cookie
 exports.sendToken = (user, statusCode, res) => {
-    
   if (!user || !user.user_id) {
-    throw new Error('User ID is required to generate JWT');
+    throw new Error("User ID is required to generate JWT");
   }
 
   const token = jwt.sign({ id: user.user_id }, process.env.JWT_SECRET, {
@@ -16,13 +14,11 @@ exports.sendToken = (user, statusCode, res) => {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES * 24 * 60 * 60 * 1000
     ),
-    httpOnly: true,};
+    httpOnly: true,
+  };
 
-  res
-    .status(statusCode)
-    .cookie('token', token, options)
-    .json({
-      success: true,
-      user,
-    });
+  res.status(statusCode).cookie("token", token, options).json({
+    success: true,
+    user,
+  });
 };

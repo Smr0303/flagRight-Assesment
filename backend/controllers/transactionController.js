@@ -2,53 +2,9 @@ const { supabase } = require("../config/db");
 const catchAsyncError = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
 const { v4: uuidv4 } = require("uuid");
-const z = require("zod");
-const { generatePDF,getTransactionData } = require('../utils/pdfHandler');
+const { generatePDF, getTransactionData } = require("../utils/pdfHandler");
 
-
-// Zod validation schemas
-const DeviceDataSchema = z.object({
-  batteryLevel: z.number().optional(),
-  deviceLatitude: z.number().optional(),
-  deviceLongitude: z.number().optional(),
-  ipAddress: z.string().optional(),
-  deviceIdentifier: z.string().optional(),
-  vpnUsed: z.boolean().optional(),
-  operatingSystem: z.string().optional(),
-  deviceMaker: z.string().optional(),
-  deviceModel: z.string().optional(),
-  deviceYear: z.string().optional(),
-  appVersion: z.string().optional(),
-});
-
-const AmountDetailsSchema = z.object({
-  transactionAmount: z.number().positive(),
-  transactionCurrency: z.string(),
-  country: z.string(),
-});
-
-const TagSchema = z.object({
-  key: z.string(),
-  value: z.string(),
-});
-
-const TransactionSchema = z.object({
-  transactionId: z.string().uuid().optional(),
-  type: z.enum(["Deposit", "Withdrawal", "Transfer", "Payment"]),
-  timestamp: z.number().int().optional(),
-  originUserId: z.string(),
-  destinationUserId: z.string(),
-  originAmountDetails: AmountDetailsSchema,
-  destinationAmountDetails: AmountDetailsSchema,
-  promotionCodeUsed: z.boolean().optional(),
-  reference: z.string().optional(),
-  originDeviceData: DeviceDataSchema.optional(),
-  destinationDeviceData: DeviceDataSchema.optional(),
-  tags: z.array(TagSchema).optional(),
-  description: z.string().optional(),
-  originEmail: z.string().email().optional(),
-  destinationEmail: z.string().email().optional(),
-});
+/*Function to create Transaction */
 
 exports.createTransaction = catchAsyncError(async (req, res, next) => {
   const {
@@ -69,7 +25,6 @@ exports.createTransaction = catchAsyncError(async (req, res, next) => {
 
   // Perform necessary checks
 
-  console.log(req.body);
   if (
     !type ||
     !destinationUserId ||
@@ -147,126 +102,203 @@ exports.fetchTransaction = catchAsyncError(async (req, res, next) => {
   });
 });
 
+/*Function used for applying filters and searching Transactions */
+
 exports.searchTransaction = catchAsyncError(async (req, res, next) => {
-  const searchParams = z
-    .object({
-      userId: z.string().uuid().optional(),
-      type: z.enum(["Deposit", "Withdrawal", "Transfer", "Payment"]).optional(),
-      startTimestamp: z.number().int().optional(),
-      endTimestamp: z.number().int().optional(),
-      minAmount: z.number().optional(),
-      maxAmount: z.number().optional(),
-      currency: z.string().optional(),
-      description: z.string().optional(),
-      page: z.number().int().positive().optional().default(1),
-      pageSize: z.number().int().positive().optional().default(20),
-    })
-    .parse(req.query);
+  let {
+    page = 1,
+    per_page = 10,
+    description,
+    type,
+    startTimestamp: startDate,
+    endTimestamp: endDate,
+    minAmount,
+    maxAmount,
+    status,
+  } = req.query;
 
-  const { data, error } = await supabase.rpc("search_transactions", {
-    p_user_id: searchParams.userId || null,
-    p_type: searchParams.type || null,
-    p_start_timestamp: searchParams.startTimestamp || null,
-    p_end_timestamp: searchParams.endTimestamp || null,
-    p_min_amount: searchParams.minAmount || null,
-    p_max_amount: searchParams.maxAmount || null,
-    p_currency: searchParams.currency || null,
-    p_description: searchParams.description || null,
-    p_page: searchParams.page,
-    p_page_size: searchParams.pageSize,
-  });
+  page = parseInt(page);
+  per_page = parseInt(per_page);
 
-  if (error) {
-    return res.status(500).json({
-      message: "Error searching transactions",
-      error: error.message,
-    });
+  let countQuery = supabase
+    .from("transactions")
+    .select("*", { count: "exact", head: true });
+
+  let baseQuery = supabase
+    .from("transactions")
+    .select("*")
+    .order("transaction_timestamp", { ascending: false });
+
+  // Apply filters only if they exist
+  if (description) {
+    countQuery = countQuery.ilike("description", `%${description}%`);
+    baseQuery = baseQuery.ilike("description", `%${description}%`);
   }
 
-  // Calculate pagination metadata
-  const totalCount = data.length > 0 ? data[0].total_count : 0;
-  const totalPages = Math.ceil(totalCount / searchParams.pageSize);
+  if (type) {
+    countQuery = countQuery.eq("type", type);
+    baseQuery = baseQuery.eq("type", type);
+  }
+
+  if (status) {
+    countQuery = countQuery.eq("status", status);
+    baseQuery = baseQuery.eq("status", status);
+  }
+
+  if (startDate && endDate) {
+    countQuery = countQuery
+      .gte(
+        "transaction_timestamp",
+        parseInt(new Date(parseInt(startDate)).getTime())
+      )
+      .lte(
+        "transaction_timestamp",
+        parseInt(new Date(parseInt(endDate)).getTime())
+      );
+
+    baseQuery = baseQuery
+      .gte(
+        "transaction_timestamp",
+        parseInt(new Date(parseInt(startDate)).getTime())
+      )
+      .lte(
+        "transaction_timestamp",
+        parseInt(new Date(parseInt(endDate)).getTime())
+      );
+  } else if (startDate) {
+    countQuery = countQuery.gte(
+      "transaction_timestamp",
+      parseInt(new Date(parseInt(startDate)).getTime())
+    );
+
+    baseQuery = baseQuery.gte(
+      "transaction_timestamp",
+      parseInt(new Date(parseInt(startDate)).getTime())
+    );
+  } else if (endDate) {
+    countQuery = countQuery.lte(
+      "transaction_timestamp",
+      parseInt(new Date(parseInt(endDate)).getTime())
+    );
+
+    baseQuery = baseQuery.lte(
+      "transaction_timestamp",
+      parseInt(new Date(parseInt(endDate)).getTime())
+    );
+  }
+
+  if (minAmount) {
+    countQuery = countQuery.gte(
+      "originamountdetails->transactionAmount",
+      minAmount
+    );
+
+    baseQuery = baseQuery.gte(
+      "originamountdetails->transactionAmount",
+      minAmount
+    );
+  }
+
+  if (maxAmount) {
+    countQuery = countQuery.lte(
+      "originamountdetails->transactionAmount",
+      maxAmount
+    );
+
+    baseQuery = baseQuery.lte(
+      "originamountdetails->transactionAmount",
+      maxAmount
+    );
+  }
+
+  const { count, error: countError } = await countQuery;
+
+  const skip = (page - 1) * per_page;
+
+  baseQuery = baseQuery.range(skip, skip + per_page - 1);
+
+  const { data, error } = await baseQuery;
+
+  if (error) {
+    console.log(error);
+    throw new Error(error);
+  }
+
+  const pagination = {
+    page: parseInt(page),
+    per_page: parseInt(per_page),
+    total: count,
+    total_pages: Math.ceil(count / parseInt(per_page)),
+    next_page_available: parseInt(page) < Math.ceil(count / parseInt(per_page)),
+    next_page:
+      parseInt(page) < Math.ceil(count / parseInt(per_page))
+        ? parseInt(page) + 1
+        : null,
+    previous_page_available: parseInt(page) > 1,
+    previous_page: parseInt(page) > 1 ? parseInt(page) - 1 : null,
+  };
 
   res.status(200).json({
-    data: data,
-    pagination: {
-      page: searchParams.page,
-      pageSize: searchParams.pageSize,
-      totalCount: totalCount,
-      totalPages: totalPages,
-    },
+    success: true,
+    data,
+    pagination,
   });
 });
 
-
+/*Function to fetch all tranctionfor CSV and normally */
 exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
-
-  let { 
-    page = 1, 
-    per_page = 10, 
-    current_user_id = null,// New parameter to determine if all records are needed
-
+  let {
+    page = 1,
+    per_page = 10,
+    current_user_id = null, // New parameter to determine if all records are needed
   } = req.query;
 
-   const export_all = (req.query.export_all === "true");
+  const export_all = req.query.export_all === "true";
 
   // Check minimum and maximum values for page and per_page
 
   if (!export_all) {
-
     if (page < 1) page = 1;
     if (per_page < 1) per_page = 1;
     if (per_page > 50) per_page = 50;
-    
   }
 
   // Base query for both total count and data fetch
-  let countQuery = supabase.from("transactions").select('*', { 
-    count: "exact", 
-    head: true 
+  let countQuery = supabase.from("transactions").select("*", {
+    count: "exact",
+    head: true,
   });
 
-  if (current_user_id) {
-    countQuery = countQuery.eq('user_id', current_user_id);
-  }
+  if (current_user_id) countQuery = countQuery.eq("user_id", current_user_id);
 
-  const { count,  countError } = await countQuery;
-
-  console.log(count);
+  const { count, countError } = await countQuery;
 
   if (countError) {
-
     console.error("Count error:", countError);
     return next(new ErrorHandler("Error fetching transaction count", 500));
-
-  }
-
-  else if (count === null) {
-
+  } else if (count === null) {
     console.error("Count is null, something went wrong");
     return next(new ErrorHandler("Error calculating total count", 500));
   }
+
   let dataQuery = supabase
-  .from("transactions")
-  .select("*")
-  .order('transaction_timestamp', { ascending: false });
-  
-  if (current_user_id) dataQuery = dataQuery.eq('user_id', current_user_id);
+    .from("transactions")
+    .select("*")
+    .order("transaction_timestamp", { ascending: false });
+
+  if (current_user_id) dataQuery = dataQuery.eq("user_id", current_user_id);
 
   // Apply pagination if not exporting all
   if (!export_all) {
-
     const maxPageNumber = Math.ceil(count / per_page);
 
     if (page > maxPageNumber) page = maxPageNumber;
 
     dataQuery = dataQuery.range((page - 1) * per_page, page * per_page - 1);
-
   }
 
   // Fetch the actual data
-  const { data,  dataError } = await dataQuery;
-
+  const { data, dataError } = await dataQuery;
 
   if (dataError) {
     console.error("Data fetch error:", dataError);
@@ -276,14 +308,13 @@ exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
       error: dataError.message,
     });
   }
-  
 
   // Generate response based on whether it's an export or paginated request
   if (export_all) {
-    return res.status(200).json({ 
+    return res.status(200).json({
       success: true,
       total: count,
-      data 
+      data,
     });
   }
 
@@ -294,24 +325,25 @@ exports.fetchAllTransactions = catchAsyncError(async (req, res, next) => {
     total: count,
     total_pages: Math.ceil(count / parseInt(per_page)),
     next_page_available: parseInt(page) < Math.ceil(count / parseInt(per_page)),
-    next_page: parseInt(page) < Math.ceil(count / parseInt(per_page))
-      ? parseInt(page) + 1
-      : null,
+    next_page:
+      parseInt(page) < Math.ceil(count / parseInt(per_page))
+        ? parseInt(page) + 1
+        : null,
     previous_page_available: parseInt(page) > 1,
     previous_page: parseInt(page) > 1 ? parseInt(page) - 1 : null,
   };
 
-  return res.status(200).json({ 
+  return res.status(200).json({
     success: true,
-    pagination, 
-    data 
+    pagination,
+    data,
   });
 });
 
+/*Function for getting Summarid data */
 
 exports.getSummary = catchAsyncError(async (req, res, next) => {
   try {
-
     const { data: transactions, error } = await supabase
       .from("transactions")
       .select("*");
@@ -325,12 +357,14 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
       const amount = transaction.originamountdetails?.transactionAmount || 0;
       return sum + amount;
     }, 0);
-  
+
     // Calculate total transactions
     const totalTransactions = transactions.length;
-  
+
     // Calculate average transaction size
-    const avgTransactionSize = totalTransactions ? totalVolume / totalTransactions : 0;
+    const avgTransactionSize = totalTransactions
+      ? totalVolume / totalTransactions
+      : 0;
 
     const completedTransactions = transactions.filter(
       (transaction) => transaction.status === "Completed"
@@ -342,8 +376,6 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
       avgTransactionSize,
       completedTransactions,
     };
-
-    // console.log(transactionSummary);
 
     // Calculate pie chart data
     const deposits = transactions.filter(
@@ -373,66 +405,74 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
         pieChartData,
       },
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.error("Error fetching transaction data:", error);
     throw error;
   }
 });
 
+/*Function for getting tranction report in pdf format */
 
 exports.getTransactionReport = async (req, res) => {
   try {
-      const { startDate, endDate, transactionType } = req.query;
-      
-      // Get transaction data from database
-      const transactionData = await getTransactionData(startDate, endDate, transactionType);
+    const { startDate, endDate, transactionType } = req.query;
 
-      // console.log(transactionData,"Here i sam manik");
-      
-      // Validate and clean transaction data
-      const validTransactions = transactionData.filter(t => 
-        t && 
-        t.originamountdetails && 
-        typeof t.originamountdetails.transactionAmount === 'number' && 
+    // Get transaction data from database
+    const transactionData = await getTransactionData(
+      startDate,
+      endDate,
+      transactionType
+    );
+
+    // Validate and clean transaction data
+    const validTransactions = transactionData.filter(
+      (t) =>
+        t &&
+        t.originamountdetails &&
+        typeof t.originamountdetails.transactionAmount === "number" &&
         !isNaN(t.originamountdetails.transactionAmount)
     );
-      
-      // Calculate summary with validated data
-      const summary = {
-        totalTransactions: validTransactions.length,
-        totalVolume: validTransactions.reduce((sum, t) => 
-            sum + t.originamountdetails.transactionAmount, 0
-        ),
-        top4Transactions: validTransactions
-            .sort((a, b) => 
-                b.originamountdetails.transactionAmount - a.originamountdetails.transactionAmount
-            )
-            .slice(0, 3)
-            .map(t => ({
-                transactionId: t.transactionid,
-                amount: Number(t.originamountdetails.transactionAmount),
-                currency: t.originamountdetails.transactionCurrency,
-                type: t.type,
-                timestamp: t.transaction_timestamp,
-                reference: t.reference || 'No reference',
-                originCountry: t.originamountdetails.country,
-                destinationCountry: t.destinationamountdetails.country,
-                originUser: t.originuserid,
-                destinationUser: t.destinationuserid
-            }))
+
+    // Calculate summary with validated data
+    const summary = {
+      totalTransactions: validTransactions.length,
+      totalVolume: validTransactions.reduce(
+        (sum, t) => sum + t.originamountdetails.transactionAmount,
+        0
+      ),
+      top4Transactions: validTransactions
+        .sort(
+          (a, b) =>
+            b.originamountdetails.transactionAmount -
+            a.originamountdetails.transactionAmount
+        )
+        .slice(0, 3)
+        .map((t) => ({
+          transactionId: t.transactionid,
+          amount: Number(t.originamountdetails.transactionAmount),
+          currency: t.originamountdetails.transactionCurrency,
+          type: t.type,
+          timestamp: t.transaction_timestamp,
+          reference: t.reference || "No reference",
+          originCountry: t.originamountdetails.country,
+          destinationCountry: t.destinationamountdetails.country,
+          originUser: t.originuserid,
+          destinationUser: t.destinationuserid,
+        })),
     };
-      
-      // Generate PDF
-      const pdfBuffer = await generatePDF(summary);
-      
-      // Send PDF as download
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=transaction-summary.pdf');
-      res.status(200).send(pdfBuffer);
-      
+
+    // Generate PDF
+    const pdfBuffer = await generatePDF(summary);
+
+    // Send PDF as download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=transaction-summary.pdf"
+    );
+    res.status(200).send(pdfBuffer);
   } catch (error) {
-      console.error('Error generating transaction summary:', error);
-      res.status(500).json({ error: 'Failed to generate transaction summary' });
+    console.error("Error generating transaction summary:", error);
+    res.status(500).json({ error: "Failed to generate transaction summary" });
   }
 };
