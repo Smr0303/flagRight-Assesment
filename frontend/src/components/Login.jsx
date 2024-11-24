@@ -17,7 +17,7 @@ function Login() {
 
     try {
 
-      const response = await axiosClient.post('/user/login', data,{
+      const response = await axiosClient.post('/user/login', data, {
         withCredentials: true,
       });
 
@@ -30,13 +30,13 @@ function Login() {
         if (response.data) dispatch(authLogin(response.data.user));
 
         navigate('/');
-      } 
-      
+      }
+
       else {
         setError('Login failed. Please try again.');
       }
 
-    } 
+    }
     catch (err) {
       console.error(err);
 
@@ -74,7 +74,7 @@ function Login() {
             to="/signup"
             className="font-medium text-primary transition-all duration-200 hover:underline"
           >
-            Sign Up
+            Register
           </Link>
         </p>
         {error && <p className="text-red-600 mt-8 text-center">{error}</p>}

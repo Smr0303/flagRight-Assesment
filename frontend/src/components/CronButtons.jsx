@@ -9,7 +9,7 @@ const CronAndCreateButtons = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-   const handleToggleCron = async () => {
+  const handleToggleCron = async () => {
     if (cronStatus) {
       try {
         const response = await axiosClient.post("/cron/stopCron", {
@@ -19,7 +19,7 @@ const CronAndCreateButtons = () => {
         if (response.status === 200) alert("Job stopped successfully");
 
         dispatch(stopCron());
-        
+
         window.location.reload();
 
       } catch (error) {
@@ -99,26 +99,26 @@ const CronAndCreateButtons = () => {
 
 
   const handleCreateTransaction = () => {
-    
+
     navigate('/create-transaction');
-    
+
   };
 
   return (
-<div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-  <button
-    onClick={handleToggleCron}
-    className={`inline-block px-4 py-2 duration-200 hover:bg-gray-600 rounded-md shadow-md ${!cronStatus ? 'bg-[rgb(25,118,210)] text-white' : 'bg-red-500 text-white'}`}
-  >
-    {cronStatus ? "Stop Cron" : "Start Cron"}
-  </button>
-  <button
-    onClick={handleCreateTransaction}
-    className={`inline-block px-4 py-2 duration-200 hover:bg-gray-600 rounded-md shadow-md bg-[rgb(25,118,210)] text-white`}
-  >
-    <span className="mr-2">+</span> Create Transaction
-  </button>
-</div>
+    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+      <button
+        onClick={handleToggleCron}
+        className={`inline-block px-4 py-2 duration-200 hover:bg-gray-600 rounded-md shadow-md ${!cronStatus ? 'bg-[rgb(25,118,210)] text-white' : 'bg-red-500 text-white'}`}
+      >
+        {cronStatus ? "Stop Cron" : "Start Cron"}
+      </button>
+      <button
+        onClick={handleCreateTransaction}
+        className={`inline-block px-4 py-2 duration-200 hover:bg-gray-600 rounded-md shadow-md bg-[rgb(25,118,210)] text-white`}
+      >
+        <span className="mr-2">+</span> Create Transaction
+      </button>
+    </div>
   );
 };
 

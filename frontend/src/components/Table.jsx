@@ -6,7 +6,7 @@ import {
   PaginationRoot,
 } from "@/components/ui/pagination"
 
-export default function Demo (){
+export default function Demo() {
   return (
     <Stack width="full" gap="5">
       <Heading size="xl">Products</Heading>

@@ -1,11 +1,13 @@
-import axios from 'axios';
+import axios from "axios";
 
 axios.defaults.withCredentials = true;
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: `${apiUrl}`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 

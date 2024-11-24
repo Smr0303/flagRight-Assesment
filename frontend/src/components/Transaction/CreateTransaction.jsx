@@ -37,7 +37,7 @@ const TRANSACTION_TYPES = ['PAYMENT', 'WITHDRAWAL', 'PAYMENTS', 'TRANSFER'];
 const TransactionForm = () => {
 
 
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     type: '',
@@ -85,40 +85,40 @@ const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axiosClient.post('/transaction/addTransaction',  JSON.stringify({
-          type: formData.type,
-          originUserId: formData.originuserid,
-          destinationUserId: formData.destinationuserid,
-          originAmountDetails: formData.originamountdetails,
-          destinationAmountDetails: formData.destinationamountdetails,
-          promotionCodeUsed: false,
-          reference: formData.reference,
-          originDeviceData: formData.origindevice_data,
-          destinationDeviceData: formData.destinationdevice_data,
-          tags: formData.tags.split(',').map(tag => ({ value: tag.trim() })),
-          description: formData.description,
-          originEmail: formData.originemail,
-          destinationEmail: formData.destinationemail,
-        }),
+      const response = await axiosClient.post('/transaction/addTransaction', JSON.stringify({
+        type: formData.type,
+        originUserId: formData.originuserid,
+        destinationUserId: formData.destinationuserid,
+        originAmountDetails: formData.originamountdetails,
+        destinationAmountDetails: formData.destinationamountdetails,
+        promotionCodeUsed: false,
+        reference: formData.reference,
+        originDeviceData: formData.origindevice_data,
+        destinationDeviceData: formData.destinationdevice_data,
+        tags: formData.tags.split(',').map(tag => ({ value: tag.trim() })),
+        description: formData.description,
+        originEmail: formData.originemail,
+        destinationEmail: formData.destinationemail,
+      }),
       );
-      
 
-     if(response.status === 200) {
+
+      if (response.status === 200) {
         alert(`Transaction created with transaction id: ${response.data.data.p_transactionid}`);
         navigate("/");
-    }
-      
+      }
+
 
     } catch (error) {
-        console.error('Error creating transaction:', error);
+      console.error('Error creating transaction:', error);
 
-        switch(error.status) {
+      switch (error.status) {
 
-            case 400: alert('Error creating transaction');
-            break
+        case 400: alert('Error creating transaction');
+          break
 
-            default: alert('Internal Server Error');
-        }
+        default: alert('Internal Server Error');
+      }
 
     }
   };
@@ -164,13 +164,13 @@ const navigate = useNavigate();
   return (
     <ThemeProvider theme={theme}>
       <StyledCard>
-        <CardHeader 
-          title="Create Transaction" 
-          titleTypographyProps={{ 
-            variant: 'h5', 
+        <CardHeader
+          title="Create Transaction"
+          titleTypographyProps={{
+            variant: 'h5',
             color: 'primary',
             align: 'center'
-          }} 
+          }}
         />
         <CardContent>
           <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -181,7 +181,7 @@ const navigate = useNavigate();
                 </Grid>
               ))}
             </Grid>
-            
+
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
               <Button
                 variant="outlined"

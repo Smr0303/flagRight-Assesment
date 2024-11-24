@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Dropdown = ({ label, name, options, register ,...props}) => {
+const Dropdown = ({ label, name, options, register, ...props }) => {
   return (
     <div className="mb-4">
       <label className="inline-block mb-1 pl-1" htmlFor={name}>
