@@ -24,11 +24,13 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 
 ## 🧾 Key Assumptions
 
-- While using the project first login using Admin test credentials as no dashboard for first user as an admin registration
-- The system is designed for a single company with multiple user roles (Admin, CEO, Employee, etc.)
+- While using the project first login using Admin test credentials provided below as no seperate Admin dashboard is made . So users can register themselves as Admin or at other role using that account
+- The system is designed keeping in mind for a single company having employees with multiple roles (Admin, CEO, Employee, etc.)
 - Only company administrators have access to user registration and CRON job management
 - All other features are accessible to all authenticated users within the company
 - Transaction data follows the Flagright Docs Transaction schema with an additional description field
+
+## 🚀 Deployed Link Remember to login first using Admin credentials [Link](flag-right-assesment-w5np-pditluy84.vercel.app)
 
 ## ✨ Features
 
@@ -158,7 +160,7 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 1. Clone the repo to your local machine.
 2. Open Terminal and direct into the frontend folder
    ```bash
-      cd frontend
+   cd frontend
    ```
 3. Install the required dependency for server using :
 
@@ -196,6 +198,4 @@ Other employee | i@gmail.com         | 12345678     |
       cd ..
    ```
 
-2. The rest instructions are provide  [here]()
-
-
+2. The rest instructions are provided  [here](https://github.com/Smr0303/flagRight-Assesment/blob/ef67aff3e995bfdefdd06da9c9a3719ad06b2320/backend/SETUP_GUIDE.md)
