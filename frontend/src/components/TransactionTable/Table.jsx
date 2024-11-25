@@ -125,7 +125,6 @@ const TransactionTable = () => {
         );
 
 
-
         // Extract the required attributes from the fetched data
         const transformedData = response.data.data.map((transaction) => ({
           id: transaction.transactionid,
@@ -133,8 +132,10 @@ const TransactionTable = () => {
             transaction.transaction_timestamp
           ).toLocaleDateString(),
           type: transaction.type,
-          amount: transaction.originamountdetails.transactionAmount,
+          amount: transaction.originamountdetails.transactionAmount?transaction.originamountdetails.transactionAmount:0,
           status: transaction.status || "Unknown", // Assuming status is not provided in the original data
+          originId: transaction.originuserid,
+          destinationId: transaction.destinationuserid,
         }));
 
         setData(transformedData);
@@ -293,6 +294,8 @@ const TransactionTable = () => {
         type: transaction.type,
         amount: transaction.originamountdetails.transactionAmount,
         status: transaction.status || "Unknown",
+        originId: transaction.originuserid || "Unknown",
+        destinationId: transaction.destinationuserid || "Unknown",
       }));
 
       setData([...transformedData]);
@@ -432,7 +435,7 @@ const TransactionTable = () => {
       }
       return a[orderBy].localeCompare(b[orderBy]) * compareValue;
     });
-  }, [data]);
+  }, [data,order,orderBy]);
 
 
   return (
@@ -645,6 +648,25 @@ const TransactionTable = () => {
                   Status
                 </TableSortLabel>
               </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "id"}
+                  direction={orderBy === "id" ? order : "asc"}
+                  onClick={() => handleSort("id")}
+                >
+                  Origin Id
+                </TableSortLabel>
+              </TableCell>
+
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === "id"}
+                  direction={orderBy === "id" ? order : "asc"}
+                  onClick={() => handleSort("id")}
+                >
+                  Destination Id
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -673,6 +695,8 @@ const TransactionTable = () => {
                   <TableCell>{row.type}</TableCell>
                   <TableCell>${row.amount}</TableCell>
                   <TableCell>{row.status}</TableCell>
+                  <TableCell>{row.originId}</TableCell>
+                  <TableCell>{row.destinationId}</TableCell>
                 </TableRow>
               ))
             )}
