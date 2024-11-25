@@ -173,7 +173,7 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 5. Start the dev server using :
 
    ```javascript
-   npm start
+   npm run dev
    ```
 
 ## 🏎 Creating production built
@@ -183,6 +183,24 @@ A comprehensive Transaction Management API that enables companies to manage, tra
    ```javascript
    npm run build
    ```
+### 🚀 Running the Frontend Using Docker
+
+Here’s how to build and run your frontend application using Docker:
+
+---
+
+### Step 1: Build the Docker Image
+
+Use the following command to build the Docker image for your frontend:
+
+```bash
+docker build --build-arg VITE_API_URL=http://localhost:8000/api -t frontend-app   
+```
+
+Use the command to run the docker image
+```bash
+docker run -p 80:80 frontend-app
+```   
 
 ## 🤝 Test user credentials
 
