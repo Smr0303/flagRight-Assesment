@@ -1,4 +1,8 @@
 <p align='center'>
+<b>A Project built as an Intern assignment for Flagright</b>
+</p>
+
+<p align='center'>
 <img src='.frontend/src/assets/logo.svg'  width='25%'>
 </p>
 
@@ -8,12 +12,18 @@
 
 ---
 
+## 🚀 Link to [Frontend](https://github.com/Smr0303/flagRight-Assesment/tree/28b6ea1d41972a5fa7c1dede7212f3ea8cb1b300/frontend), [Backend](https://github.com/Smr0303/flagRight-Assesment/tree/28b6ea1d41972a5fa7c1dede7212f3ea8cb1b300/backend)
+
+
+## 📷 Link to [Screenshots](./SCREENSHOTS.md)
+
 ## 🧾 Project Description
 
-A comprehensive Transaction Management API that enables companies to manage, track, and analyze their transactions efficiently. The system supports role-based access control with different levels of permissions for administrators, CEOs, and employees.
+A comprehensive Transaction Management API that enables companies to manage, track, and analyze their transactions efficiently. The system supports role-based access control with different levels of permissions for administrators, CEOs, and employees and providing real time transaction analytics with summary reports and transaction generation
 
 ## 🧾 Key Assumptions
 
+- While using the project first login using Admin test credentials as no dashboard for first user as an admin registration
 - The system is designed for a single company with multiple user roles (Admin, CEO, Employee, etc.)
 - Only company administrators have access to user registration and CRON job management
 - All other features are accessible to all authenticated users within the company
@@ -23,10 +33,10 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 
 ### Core Features
 
-- [x] Complete CRUD operations for transactions
+- [x] Create and Read operations for transactions
 - [x] Role-based access control
 - [x] Automated transaction generation via CRON job
-- [x] Advanced search and filtering capabilities
+- [x] Search and filtering capabilities
 - [x] Transaction reporting and analytics
 - [x] Paginated responses for optimal performance
 - [x] Dashboard for transaction management
@@ -46,6 +56,10 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 - Generate reports
 - Access dashboard
 
+### Authentication Management
+- [x] User with Admin rights can only register new employees
+- [x] Role based access to register User and control CRON jobs 
+
 ### Transaction Management
 
 - [x] Create new transactions with custom details
@@ -60,64 +74,127 @@ A comprehensive Transaction Management API that enables companies to manage, tra
   
 ### Dashboard Features
 
-- [x] Real-time transaction monitoring
+- [x] Real-time Transaction monitoring
 - [x] Advanced filtering system
 - [x] Sorting capabilities:
   - Amount (mandatory)
   - Timestamp (mandatory)
 - [x] CRON job control panel (admin only)
-- [x] Transaction analytics and reporting
+- [x] Transactions analytics 
+- [x] Transaction Summary in Pdf format
+- [x] CSV download of transaction summary
+- [x] Pagination is implemented for better UX and reduce server load
+      
 
-## ⚙ Technical Stack
+**Here is a table depicting the user privileges for better clarity**
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB (with proper indexing)
-- JWT Authentication
-- Docker
+<table>
+<thead>
+  <tr>
+    <th> </th>
+    <th colspan="1">User Management</th>
+    <th colspan="2">CRON Jobs</th>
+    <th colspan="4">Transactions</th>
+    <th colspan="2">Reports</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td></td>
+    <td><b><u>Register</u></b></td>
+    <td><b><u>Start</u></b></td>
+    <td><b><u>Stop</u></b></td>
+    <td><b><u>Create</u></b></td>
+    <td><b><u>View</u></b></td>
+    <td><b><u>Search</u></b></td>
+    <td><b><u>Filter</u></b></td>
+    <td><b><u>CSV</u></b></td>
+    <td><b><u>PDF</u></b></td>
+  </tr>
+  <tr>
+    <td><b>Admin</b></td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+  </tr>
+  <tr>
+    <td><b>Employee</b></td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+    <td>✔</td>
+  </tr>
+</tbody>
+</table>
 
-### Frontend
-- React.js
-- Material UI/Chakra UI
-- Redux for state management
-<!-- 
-## 🛠 Installation and Setup
+## ⚙ Tools and Technologies used
 
-1. Clone the repository:
-```javascript
-git clone [repository-url]
-```
+#### [Frontend](https://github.com/Smr0303/flagRight-Assesment/tree/28b6ea1d41972a5fa7c1dede7212f3ea8cb1b300/frontend)
 
-2. Install dependencies:
+1. [React.js](https://reactjs.org/)
+2. [React-icons](https://mui.com/)
 
-```javascript
-npm install
-```3.
+#### [Backend](https://github.com/Smr0303/flagRight-Assesment/tree/28b6ea1d41972a5fa7c1dede7212f3ea8cb1b300/backend)
 
-Set up environment variables:
+1. [Node.js](https://nodejs.org/en/)
+2. [Express.js](https://expressjs.com/)
+3. [Supabase](https://supabase.com/)
+4. [PdfKit](https://www.npmjs.com/package/pdfkit)
 
-Create .env file
-cp .env.example .env
+## 🛠 Installation and setup
 
-# Configure your variables in .env file
-PORT=5000
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
+1. Clone the repo to your local machine.
+2. Open Terminal and direct into the frontend folder
+   ```bash
+      cd frontend
+   ```
+3. Install the required dependency for server using :
 
-Start the development server:
+   ```javascript
+   npm install
+   ```
 
-bashCopy# Start in development mode
-npm run dev
+4. Create a `.env` file and copy-paste the contents of `.env.sample` in it.
 
-# Start in production mode
-npm start
+5. Start the dev server using :
 
-For Docker deployment:
+   ```javascript
+   npm start
+   ```
 
-bashCopy# Build and run using Docker Compose
-docker-compose up --build
+## 🏎 Creating production built
 
-# Run in detached mode
-docker-compose up -d
-The server should be running on http://localhost:5000 (or the port you specified in .env) -->
+1. Create a production ready react app using the command :
+
+   ```javascript
+   npm run build
+   ```
+
+## 🤝 Test user credentials
+
+**Role**       | **E-mail**          | **Password** |
+-------------  | ------------------- | ------------ |
+Admin          | sam@gmail.com       | 12345678     |
+Other employee | i@gmail.com         | 12345678     |
+
+## 🛠 For Backend Installation and Setup
+
+1. Come back to the root directory
+   ```bash
+      cd ..
+   ```
+
+2. The rest instructions are provide  [here]()
+
+
