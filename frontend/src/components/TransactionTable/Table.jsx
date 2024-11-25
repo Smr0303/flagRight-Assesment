@@ -239,7 +239,6 @@ const TransactionTable = () => {
   const handleSearch = async (newPage, newRowsPerPage) => {
     setLoading(true);
 
-
     try {
 
       const filledFilters = {};
@@ -458,6 +457,7 @@ const TransactionTable = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => {
             if (e.key === "Enter") {
+              resetFilters();
               handleSearch(0, rowsPerPage);
             }
           }}
@@ -466,7 +466,7 @@ const TransactionTable = () => {
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  onClick={() => handleSearch(0, rowsPerPage)}
+                  onClick={() => { resetFilters(); handleSearch(0, rowsPerPage) }}
                   sx={{ color: "primary.main" }}
                 >
                   <Search />
@@ -649,7 +649,8 @@ const TransactionTable = () => {
           </TableHead>
           <TableBody>
             {filteredAndSortedData.length === 0 ? (
-              <TableCell colspan={5} sx={{ textAlign: 'center' }}>Loading...</TableCell>
+              paginationObj.total === 0 ? (<TableCell colspan={5} sx={{ textAlign: 'center' }}>No transactions related to this description</TableCell>) :
+                <TableCell colspan={5} sx={{ textAlign: 'center' }}>Loading...</TableCell>
             ) : (
               filteredAndSortedData.map((row) => (
                 <TableRow key={row.id}>

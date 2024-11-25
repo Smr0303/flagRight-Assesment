@@ -3,8 +3,9 @@
 </p>
 
 <p align='center'>
-<img src='.frontend/src/assets/logo.svg'  width='25%'>
+<img src='./frontend/src/assets/dp1.png'>
 </p>
+
 
 <p align='center'>
 <b>Transaction Management CRUD API</b>

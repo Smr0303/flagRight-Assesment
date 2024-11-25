@@ -31,7 +31,7 @@ exports.startCronJob = catchAsyncError(async (req, res) => {
   task.start();
   isRunning = true;
 
-  return res.status(200).json({ message: "CRON job started successfully." });
+  return res.status(200).json({ message: "Please dont forget to close the cron job" });
 });
 
 // Stop the CRON job

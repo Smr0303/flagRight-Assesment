@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { startCron, stopCron } from '../store/authSlice';
 import axiosClient from '../components/utils/axios';
@@ -8,6 +8,31 @@ const CronAndCreateButtons = () => {
   const cronStatus = useSelector((state) => state.auth.cron); // Get the cron state from Redux
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    const checkCronStatus = async () => {
+      try {
+        const response = await axiosClient.get('/cron/cronStatus', {
+          withCredentials: true,
+        });
+
+        if (response.data.isRunning) {
+
+          console.log("Cron is alerady running");
+          dispatch(startCron());
+
+        } else {
+  
+          dispatch(stopCron());
+        }
+      } catch (error) {
+        console.error('Error checking cron status:', error);
+      }
+    };
+
+    checkCronStatus();
+  }, [dispatch]);
 
   const handleToggleCron = async () => {
     if (cronStatus) {
@@ -60,7 +85,7 @@ const CronAndCreateButtons = () => {
           withCredentials: true,
         });
 
-        if (response.status === 200) alert("Job started successfully");
+        if (response.status === 200) alert("Job started successfully and Please dont forget to close the cron job");
 
         dispatch(startCron());
       }
