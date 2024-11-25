@@ -30,8 +30,7 @@ A comprehensive Transaction Management API that enables companies to manage, tra
 - All other features are accessible to all authenticated users within the company
 - Transaction data follows the Flagright Docs Transaction schema with an additional description field
 
-## 🚀 Deployed Link Remember to login first using Admin credentials [Link](flag-right-assesment-w5np-pditluy84.vercel.app)
-
+## 🚀 Deployed Link Remember to login first using Admin credentials [Link](https://flag-right-assesment-w5np.vercel.app/)
 ## ✨ Features
 
 ### Core Features
