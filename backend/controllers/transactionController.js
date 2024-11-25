@@ -377,18 +377,18 @@ exports.getSummary = catchAsyncError(async (req, res, next) => {
       completedTransactions,
     };
 
-    // Calculate pie chart data
+
     const deposits = transactions.filter(
       (transaction) => transaction.type === "Deposit"
     ).length;
     const withdrawals = transactions.filter(
-      (transaction) => transaction.type === "Withdrawal"
+      (transaction) => transaction.type === "Withdrawals"
     ).length;
     const transfers = transactions.filter(
-      (transaction) => transaction.type === "Transfer"
+      (transaction) => transaction.type === "Transfers"
     ).length;
     const payments = transactions.filter(
-      (transaction) => transaction.type === "Payment"
+      (transaction) => transaction.type === "Payments"
     ).length;
 
     const pieChartData = [
