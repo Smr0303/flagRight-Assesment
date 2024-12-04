@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 function Header() {
   const authStatus = useSelector((state) => state.auth.status);
+  const userData = useSelector((state) => state.auth.userData);
   const navigate = useNavigate();
 
 
@@ -24,7 +25,7 @@ function Header() {
     {
       name: "Register",
       slug: "/signup",
-      active: true,
+      active: authStatus  &&  userData && userData.user_role === 5,
     },
   ];
 

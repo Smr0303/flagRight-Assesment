@@ -20,7 +20,8 @@ function Home() {
         if (response.status === 200) {
           console.log(200);
 
-          dispatch(login({ userData: response.data.user }));
+          dispatch(login({ userData: response.data.data }));
+  
         }
 
         else alert('Please login again to access this resource');

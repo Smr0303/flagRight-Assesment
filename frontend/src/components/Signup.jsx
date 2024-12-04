@@ -98,13 +98,13 @@ function Signup() {
           Register New Employee
         </h2>
         <p className="mt-2 text-center text-base text-black/60">
-          Already registered by Admin?&nbsp;
-          <Link
+          Only Admin can register new employees.
+          {/* <Link
             to="/login"
             className="font-medium text-primary transition-all duration-200 hover:underline"
           >
             Log In
-          </Link>
+          </Link> */}
         </p>
         {error && <p className="text-red-600 mt-8 text-center">{error}</p>}
 
