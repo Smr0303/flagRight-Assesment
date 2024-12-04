@@ -11,7 +11,7 @@ function LogoutBtn() {
 
   const logoutHandler = async () => {
     // Clear the token cookie by setting its expiration date to a past date
-    const response = await axiosClient.get('/user/logout', {
+    const response = await axiosClient.post('/user/logout', {
       withCredentials: true,
     });
 

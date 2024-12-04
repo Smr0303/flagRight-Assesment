@@ -22,7 +22,7 @@ router
 
 router.route("/login").post(loginUser);
 
-router.route("/logout").get(checkUserAuthentication, logoutUser);
+router.route("/logout").post(checkUserAuthentication, logoutUser);
 
 router.route("/verifyToken").get(checkUserAuthentication, verifyToken);
 
